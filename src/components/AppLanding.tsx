@@ -4,7 +4,6 @@ import { Link } from "@tanstack/react-router";
 import {
   ArrowDown,
   Home,
-  MapPin,
   Moon,
   Receipt,
   ShieldCheck,
@@ -185,7 +184,6 @@ export function AppLanding() {
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
           {[
             { icon: Users, label: "Labour tracking" },
-            { icon: MapPin, label: "Worker locations" },
             { icon: Truck, label: "Rentals" },
             { icon: Receipt, label: "Receipts" },
             { icon: ShieldCheck, label: "Secure login" },
