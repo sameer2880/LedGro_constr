@@ -1,7 +1,7 @@
 {
-  "name": "Centring Notes",
-  "short_name": "Centring",
-  "description": "Rentals, returns, payments and worker records \u2014 all in one place.",
+  "name": "LedGro",
+  "short_name": "LedGro",
+  "description": "Rentals, returns, payments and worker records — one ledger to grow your business.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

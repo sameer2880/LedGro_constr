@@ -1,4 +1,4 @@
-const CACHE_NAME = "mbs-works-v4";
+const CACHE_NAME = "ledgro-v1";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/favicon.png", "/logo.png"];
 
 self.addEventListener("install", (event) => {

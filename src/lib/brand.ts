@@ -4,5 +4,5 @@
  * Everything that belongs to ONE business (name, logo, receipts, WhatsApp
  * messages…) comes from that business's row instead — see lib/auth/session.tsx.
  */
-export const PLATFORM_NAME = "Centring Notes";
-export const PLATFORM_TAGLINE = "Rentals, returns, payments and worker records — all in one place.";
+export const PLATFORM_NAME = "LedGro";
+export const PLATFORM_TAGLINE = "Rentals, returns, payments and worker records — one ledger to grow your business.";
