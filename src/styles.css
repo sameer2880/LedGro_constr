@@ -1,0 +1,700 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ============================================================
+   DEVICE-TIER SHELL TOKENS
+   Single source of truth for the sizes the 3-tier app shell
+   (mobile bottom-nav / tablet rail / desktop sidebar) is built
+   from, so header, rail, bottom-nav and page padding never drift
+   out of sync with each other.
+   ============================================================ */
+:root {
+  --shell-header-h: 4rem; /* 64px topbar, plus safe-area on iOS (see .site-header) */
+  --shell-bottomnav-h: 4.25rem; /* 68px mobile tab bar, plus safe-area */
+  --shell-rail-w: 4.75rem; /* 76px tablet icon-only rail */
+  --shell-sidebar-w: 16rem; /* 256px desktop labeled sidebar */
+  --shell-touch-target: 2.75rem; /* 44px — Apple/Material minimum comfortable hit area */
+}
+
+:root {
+  --radius: 1.25rem;
+  /* Leafora: soft sage/cream canvas for light mode, with the lime-on-forest brand pairing. */
+  --background: #f3f6ee;
+  --foreground: #16261c;
+  --card: rgb(255 255 255 / 86%);
+  --card-foreground: #16261c;
+  --popover: rgb(255 255 255 / 96%);
+  --popover-foreground: #16261c;
+  --primary: #4f7a3d;
+  --primary-foreground: #ffffff;
+  --secondary: rgb(224 233 216 / 70%);
+  --secondary-foreground: #2c4423;
+  --muted: rgb(230 237 224 / 76%);
+  --muted-foreground: #64785e;
+  --accent: #a8d977;
+  --accent-foreground: #16261c;
+  --destructive: #c2414d;
+  --destructive-foreground: #ffffff;
+  --warning: #b97812;
+  --warning-foreground: #2d2109;
+  --success: #3f8f5c;
+  --success-foreground: #ffffff;
+  --border: rgb(22 38 28 / 14%);
+  --input: rgb(22 38 28 / 22%);
+  --ring: #4f7a3d;
+  --chart-1: #4f7a3d;
+  --chart-2: #a8d977;
+  --chart-3: #7fae5f;
+  --chart-4: #d4a72c;
+  --chart-5: #738a6e;
+  --sidebar: rgb(255 255 255 / 90%);
+  --sidebar-foreground: #16261c;
+  --sidebar-primary: #4f7a3d;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgb(79 122 61 / 11%);
+  --sidebar-accent-foreground: #4f7a3d;
+  --sidebar-border: rgb(22 38 28 / 14%);
+  --sidebar-ring: #4f7a3d;
+}
+
+.dark {
+  /* Leafora signature look: deep forest-green surfaces with a bright lime accent. */
+  --background: #0e1911;
+  --foreground: #f4f6ee;
+  --card: rgb(29 46 34 / 82%);
+  --card-foreground: #f4f6ee;
+  --popover: rgb(20 33 24 / 96%);
+  --popover-foreground: #f4f6ee;
+  --primary: #a8d977;
+  --primary-foreground: #16281a;
+  --secondary: rgb(56 82 60 / 45%);
+  --secondary-foreground: #e6efe0;
+  --muted: rgb(38 58 42 / 58%);
+  --muted-foreground: #a3bfa4;
+  --accent: #c8e896;
+  --accent-foreground: #16281a;
+  --destructive: #f07878;
+  --destructive-foreground: #260b0b;
+  --warning: #f2bd52;
+  --warning-foreground: #251907;
+  --success: #7dcb92;
+  --success-foreground: #0b2013;
+  --border: rgb(168 217 119 / 16%);
+  --input: rgb(168 217 119 / 22%);
+  --ring: #a8d977;
+  --chart-1: #a8d977;
+  --chart-2: #4f8eaf;
+  --chart-3: #7dcb92;
+  --chart-4: #e0b45a;
+  --chart-5: #a3bfa4;
+  --sidebar: rgb(14 25 17 / 96%);
+  --sidebar-foreground: #f4f6ee;
+  --sidebar-primary: #a8d977;
+  --sidebar-primary-foreground: #16281a;
+  --sidebar-accent: rgb(168 217 119 / 14%);
+  --sidebar-accent-foreground: #cdeca0;
+  --sidebar-border: rgb(168 217 119 / 18%);
+  --sidebar-ring: #a8d977;
+}
+
+
+@layer base {
+  * { border-color: var(--color-border); }
+
+  /* `overscroll-behavior` stops the browser's own rubber-band/bounce
+     scroll (iOS Safari) and pull-to-refresh glow (Android Chrome) from
+     ever kicking in on the outermost scroll container. Without this,
+     swiping past the top/bottom of a short page drags the viewport
+     beyond the document bounds for a moment, exposing whatever sits
+     behind it.
+     NOTE: this is deliberately just `overscroll-behavior-y` with no
+     `overflow-x: hidden` alongside it — putting `overflow` of any kind
+     on <html>/<body> is a known WebKit bug trigger that makes
+     `position: fixed` elements (like the mobile bottom nav) stop
+     tracking the real viewport and "float" up into the page instead
+     of sitting flush at the bottom. Horizontal clipping is handled
+     per-container (see `main`'s `overflow-x-hidden`) instead. */
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
+
+  html { background-color: var(--color-background); }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    min-height: 100dvh;
+    background-image:
+      radial-gradient(900px circle at 8% 8%, rgb(79 122 61 / 12%), transparent 55%),
+      radial-gradient(800px circle at 92% 18%, rgb(168 217 119 / 14%), transparent 50%),
+      radial-gradient(850px circle at 25% 95%, rgb(127 174 95 / 10%), transparent 50%),
+      radial-gradient(700px circle at 95% 90%, rgb(63 143 92 / 8%), transparent 50%);
+    background-repeat: no-repeat;
+  }
+
+  /* `background-attachment: fixed` is unreliable on touch browsers —
+     iOS Safari and Android Chrome both re-paint it against the *last*
+     viewport size instead of the live one while the address bar
+     shows/hides during a scroll, so the gradient can visibly detach
+     from the screen edges mid-swipe. Keep it only for pointer-driven
+     (non-touch) devices, where it renders correctly and gives the
+     parallax-y feel it was meant for; touch devices get the safe,
+     default `scroll` attachment instead. */
+  @media (hover: hover) and (pointer: fine) {
+    body {
+      background-attachment: fixed;
+    }
+  }
+}
+.dark body {
+  background-image:
+    radial-gradient(900px circle at 8% 8%, rgb(168 217 119 / 10%), transparent 55%),
+    radial-gradient(800px circle at 92% 15%, rgb(125 203 146 / 10%), transparent 50%),
+    radial-gradient(850px circle at 25% 95%, rgb(79 122 61 / 16%), transparent 55%),
+    radial-gradient(700px circle at 95% 90%, rgb(200 232 150 / 8%), transparent 50%);
+}
+
+/* Glassmorphism: every surface built from these tokens becomes frosted glass
+   that blurs and tints whatever sits behind it (the gradient canvas on body,
+   or content scrolling underneath a sticky header/sidebar/modal). */
+.bg-card,
+.bg-popover,
+.bg-sidebar,
+.bg-background,
+.bg-muted,
+.bg-secondary {
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+}
+
+/* Outermost app-shell background — deliberately NOT `.bg-background`.
+   That class carries `backdrop-filter` above, and `backdrop-filter` (like
+   `transform`/`filter`) makes an element a *containing block* for any
+   `position: fixed` descendant. The app shell wraps the fixed
+   `.shell-bottomnav`, so giving the shell itself a backdrop-filter makes
+   the browser pin the nav to the shell instead of the real viewport.
+   Visible result: over-swiping past the top/bottom of the page (the
+   rubber-band bounce) drags the whole shell — bottom nav included —
+   along with it, instead of the nav staying put while only the page
+   content moves. This class gives the same background color with no
+   backdrop-filter, so it can never become that containing block. */
+.shell-root {
+  background-color: var(--color-background);
+}
+/* Top nav bar: solid, no glass/blur/transparency */
+.site-header {
+  background-color: #f5f8f0;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  height: 4rem;
+}
+.dark .site-header {
+  background-color: #0f1c14;
+}
+/* Keep the header (logo, menu button, refresh) clear of the notch /
+   status bar on iOS home-screen installs, where the status bar is
+   translucent and the page draws underneath it. Scoped to standalone
+   display-mode only — a regular browser tab (even with
+   viewport-fit=cover) already reserves its own chrome for the status
+   bar, so applying this unconditionally left a permanent empty gap
+   above the header there. */
+@media (display-mode: standalone) {
+  .site-header {
+    padding-top: env(safe-area-inset-top, 0px);
+    height: calc(4rem + env(safe-area-inset-top, 0px));
+  }
+}
+
+/* The mobile slide-in sidebar (a full-height Sheet, class contains
+   "inset-y-0") runs edge-to-edge, so keep its logo block and sign-out
+   button clear of the notch and the home-indicator gesture bar.
+   Centered dialogs ("left-[50%] top-[50%]") are unaffected. */
+[role="dialog"][class*="inset-y-0"] {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Keep page content clear of the home-indicator gesture area at the bottom
+   when the app is installed as a standalone PWA (edge-to-edge on iOS). In a
+   regular browser tab safe-area-inset-bottom is 0, so this is a no-op there. */
+@media (display-mode: standalone) {
+  main {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* Fixed dialogs/sheets/dropdowns get a touch more blur + a soft glass shadow
+   so they read as raised panels rather than flat tinted rectangles. */
+[data-slot="dialog-content"],
+[role="dialog"],
+[role="alertdialog"],
+[role="menu"],
+[role="listbox"] {
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
+  box-shadow:
+    0 8px 32px rgb(15 23 42 / 12%),
+    inset 0 1px 0 rgb(255 255 255 / 40%);
+}
+
+.dark [data-slot="dialog-content"],
+.dark [role="dialog"],
+.dark [role="alertdialog"],
+.dark [role="menu"],
+.dark [role="listbox"] {
+  box-shadow:
+    0 8px 32px rgb(0 0 0 / 40%),
+    inset 0 1px 0 rgb(255 255 255 / 6%);
+}
+
+/* ============================================================
+   RESPONSIVE DEVICE-TIER SYSTEM
+   Everything below is additive — it never overrides an existing
+   rule above, it only adds new utility classes the app shell and
+   pages opt into. Breakpoints match Tailwind defaults exactly:
+     mobile  < 768px   tablet  768–1023px   desktop >= 1024px
+   ============================================================ */
+
+/* ---- Fluid typography -------------------------------------------------
+   Scales smoothly between phone and desktop instead of jumping at a
+   single breakpoint, so text never feels cramped on a 360px phone or
+   tiny on a 27" monitor. clamp(min, preferred-vw, max). */
+@layer base {
+  .text-fluid-xs   { font-size: clamp(0.72rem, 0.68rem + 0.2vw, 0.8rem); }
+  .text-fluid-sm   { font-size: clamp(0.82rem, 0.78rem + 0.2vw, 0.9rem); }
+  .text-fluid-base { font-size: clamp(0.92rem, 0.88rem + 0.25vw, 1rem); }
+  .text-fluid-lg   { font-size: clamp(1.05rem, 0.98rem + 0.35vw, 1.2rem); }
+  .text-fluid-xl   { font-size: clamp(1.2rem, 1.08rem + 0.6vw, 1.5rem); }
+  .text-fluid-2xl  { font-size: clamp(1.35rem, 1.15rem + 1vw, 1.875rem); }
+  .text-fluid-3xl  { font-size: clamp(1.6rem, 1.3rem + 1.5vw, 2.25rem); }
+}
+
+/* ---- Touch targets ------------------------------------------------------
+   Any interactive element on a touch-capable device should have at
+   least a 44x44px hit area (Apple HIG / Material minimum), even if it
+   looks visually smaller. Applied automatically to coarse-pointer
+   devices (phones, tablets, touch laptops) — mouse/trackpad users keep
+   the tighter, denser default sizing. */
+@media (pointer: coarse) {
+  .touch-target,
+  [data-touch-target] {
+    min-height: var(--shell-touch-target);
+    min-width: var(--shell-touch-target);
+  }
+
+  /* Every <Button> gets a comfortable minimum tap height on touch
+     devices only — mouse/trackpad users keep the tighter default
+     (h-8/h-9) sizing untouched. Buttons that already opt into the
+     explicit "touch" / "icon-touch" size variants are unaffected
+     since those are already >= this minimum. */
+  .btn-comfortable {
+    min-height: var(--shell-touch-target);
+  }
+}
+
+/* ---- Fluid section/page padding -----------------------------------------
+   Replaces a hard p-4 / p-6 jump with a smooth scale so content isn't
+   glued to the screen edge on a small phone nor floating with too
+   little margin on an ultrawide monitor. */
+.page-pad {
+  padding: clamp(0.875rem, 0.7rem + 1vw, 1.75rem);
+}
+
+/* ---- Responsive card/stat grid -------------------------------------------
+   `auto-fit`+`minmax` grid that reflows itself: 2-up on a phone,
+   3–4-up on a tablet, as many as fit on a wide desktop — no manual
+   `sm:` / `lg:` column-count juggling needed per page. */
+.grid-fluid {
+  display: grid;
+  gap: clamp(0.75rem, 0.6rem + 0.5vw, 1.25rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+}
+.grid-fluid-sm {
+  display: grid;
+  gap: clamp(0.75rem, 0.6rem + 0.5vw, 1.25rem);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
+}
+
+/* ---- Unified mobile navigation bar ----------------------------------------
+   Mobile: one continuous floating navigation bar that matches the
+   application's sage/forest-green theme. The bar is intentionally distinct
+   from the page/cards so it remains easy to see in both light and dark mode.
+   The active tab uses the deep forest brand color in light mode and the
+   brighter lime brand accent in dark mode.
+   md+ collapses into the existing plain icon rail. */
+.shell-bottomnav {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(0.85rem + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  width: min(calc(100% - 1.5rem), 26rem);
+  height: 4rem;
+  display: flex;
+  align-items: center;
+}
+
+.shell-navbar {
+  flex: 1 1 auto;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0.4rem;
+  background-color: #e8f0e3;
+  border: 1px solid rgb(79 122 61 / 18%);
+  border-radius: 999px;
+  box-shadow:
+    0 12px 30px -10px rgb(22 38 28 / 24%),
+    0 2px 8px rgb(79 122 61 / 8%);
+}
+
+.dark .shell-navbar {
+  background-color: #17291e;
+  border: 1px solid rgb(168 217 119 / 22%);
+  box-shadow:
+    0 12px 30px -10px rgb(0 0 0 / 60%),
+    0 2px 10px rgb(168 217 119 / 5%);
+}
+
+.shell-navtab {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  height: 2.75rem;
+  padding: 0 0.65rem;
+  border-radius: 999px;
+  color: #587052;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    padding 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.dark .shell-navtab {
+  color: #b6cbb8;
+}
+
+.shell-navtab:hover {
+  background-color: rgb(79 122 61 / 8%);
+  color: #2f5129;
+}
+
+.dark .shell-navtab:hover {
+  background-color: rgb(168 217 119 / 9%);
+  color: #d7ebc4;
+}
+
+.shell-navtab-icon {
+  height: 1.25rem;
+  width: 1.25rem;
+  flex-shrink: 0;
+}
+
+.shell-navtab-label {
+  display: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shell-navtab-active {
+  background-color: #16261c;
+  color: #ffffff;
+  padding: 0 0.95rem;
+  box-shadow: 0 4px 12px rgb(22 38 28 / 18%);
+}
+
+.shell-navtab-active:hover {
+  background-color: #16261c;
+  color: #ffffff;
+}
+
+.dark .shell-navtab-active {
+  background-color: #a8d977;
+  color: #16261c;
+  box-shadow: 0 4px 14px rgb(168 217 119 / 18%);
+}
+
+.dark .shell-navtab-active:hover {
+  background-color: #a8d977;
+  color: #16261c;
+}
+
+.shell-navtab-active .shell-navtab-label {
+  display: inline-block;
+}
+
+/* Reserve room at the bottom of scrollable page content for the floating
+   nav, so the last card/row is never hidden behind it. */
+.shell-content-offset {
+  padding-bottom: calc(4rem + 0.85rem + env(safe-area-inset-bottom, 0px) + 1rem);
+}
+
+@media (min-width: 768px) {
+  .shell-bottomnav {
+    left: 0;
+    transform: none;
+    inset-block: 0;
+    width: var(--shell-rail-w);
+    height: 100dvh;
+    padding: 0.75rem 0.5rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    border-right: 1px solid var(--color-border);
+    background-color: #f5f8f0;
+  }
+
+  .dark .shell-bottomnav {
+    background-color: #0f1c14;
+  }
+
+  /* At the rail, the bar flattens into a plain, unstyled column — the
+     rail itself (.shell-bottomnav above) carries the shared background. */
+  .shell-navbar {
+    flex: 1 1 auto;
+    height: auto;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.25rem;
+    padding: 0;
+    background-color: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .shell-navtab {
+    width: 100%;
+    height: 3.5rem;
+    flex-direction: column;
+    gap: 0.125rem;
+    border-radius: 0.75rem;
+    padding: 0;
+  }
+
+  .shell-navtab:hover {
+    background-color: transparent;
+  }
+
+  .shell-navtab-active {
+    background-color: var(--color-sidebar-accent);
+    color: var(--color-primary);
+    padding: 0;
+    box-shadow: none;
+  }
+
+  .dark .shell-navtab-active {
+    background-color: var(--color-sidebar-accent);
+    color: var(--color-primary);
+    box-shadow: none;
+  }
+
+  .shell-navtab-active:hover {
+    background-color: var(--color-sidebar-accent);
+    color: var(--color-primary);
+  }
+
+  .shell-navtab-label {
+    display: block;
+    font-size: 10.5px;
+  }
+
+  .shell-content-offset {
+    padding-bottom: 1rem;
+    padding-left: calc(var(--shell-rail-w) + 1rem);
+  }
+}
+
+/* Kept for compatibility with any remaining shell references. */
+.shell-rail {
+  display: none;
+}
+
+@media print {
+  @page { size: A4; margin: 12mm; }
+
+  html, body {
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+
+  aside, header, .shell-bottomnav, .print\:hidden { display: none !important; }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .receipt-sheet {
+    width: 100% !important;
+    max-width: none !important;
+    border-color: #111827 !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    padding: 8mm !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* The receipt uses fixed black/white/gray classes (not theme
+     variables), so it already looks the same in light and dark mode.
+     This just forces those backgrounds to actually print instead of
+     being stripped by the browser's default print color handling. */
+  .receipt-sheet * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+/* ---- Brand logo: circular ring + subtle motion -----------------------------
+   Used by <BrandLogo /> everywhere the logo appears. The ring is a pseudo-
+   element behind the (circular) image; the wrapper's padding is the ring's
+   thickness (set per instance through --brand-ring-w). */
+.brand-logo {
+  --brand-ring-w: 2px;
+  --brand-ring-a: var(--primary);
+  --brand-ring-b: rgb(79 122 61 / 12%);
+  --brand-glow: rgb(79 122 61 / 38%);
+
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  padding: var(--brand-ring-w);
+  border-radius: 9999px;
+  isolation: isolate;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.dark .brand-logo {
+  --brand-ring-b: rgb(168 217 119 / 12%);
+  --brand-glow: rgb(168 217 119 / 35%);
+}
+
+.brand-logo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--brand-ring-a); /* static ring */
+}
+
+.brand-logo-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 9999px;
+  object-fit: cover;
+  background: #ffffff;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.brand-logo:hover {
+  transform: scale(1.08);
+}
+
+.brand-logo-animated {
+  /* pop-in once, then a slow pulsing glow */
+  animation:
+    brand-logo-pop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) backwards,
+    brand-logo-glow 3.2s ease-in-out 0.7s infinite;
+}
+
+.brand-logo-animated::before {
+  /* a light "chase" travelling round the ring */
+  background: conic-gradient(
+    from 0deg,
+    var(--brand-ring-a) 0%,
+    var(--brand-ring-b) 35%,
+    var(--brand-ring-a) 60%,
+    var(--brand-ring-a) 100%
+  );
+  animation: brand-logo-spin 5s linear infinite;
+}
+
+@keyframes brand-logo-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes brand-logo-glow {
+  0%   { box-shadow: 0 0 0 0 var(--brand-glow); }
+  70%  { box-shadow: 0 0 0 8px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+@keyframes brand-logo-pop {
+  from { transform: scale(0.6) rotate(-90deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo,
+  .brand-logo::before {
+    animation: none !important;
+    transition: none;
+  }
+  .brand-logo:hover { transform: none; }
+}
+
+@media print {
+  .brand-logo,
+  .brand-logo::before {
+    animation: none !important;
+    box-shadow: none !important;
+  }
+}
