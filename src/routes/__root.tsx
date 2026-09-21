@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { PLATFORM_NAME, PLATFORM_TAGLINE } from "@/lib/brand";
+import { syncNativeStatusBar } from "@/lib/native-status-bar";
 
 import appCss from "../styles.css?url";
 
@@ -104,6 +105,18 @@ function RootComponent() {
       void supabase.removeChannel(channel);
     };
   }, [queryClient]);
+
+  // In the native LedGro app, keep the status-bar strip the same colour as the header.
+  // Watches the <html class="dark"> flag, so it follows the theme toggle automatically.
+  // Does nothing in a normal browser.
+  useEffect(() => {
+    const root = document.documentElement;
+    const sync = () => syncNativeStatusBar(root.classList.contains("dark"));
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
