@@ -1,4 +1,4 @@
-# LedGro
+# Plinthora
 
 Rentals, returns, payments, diary notes and worker attendance for centring / shuttering businesses —
 **one app, many businesses**. Each business has its own data, users and branding, and the database

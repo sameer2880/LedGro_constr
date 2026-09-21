@@ -1,12 +1,12 @@
 {
-  "name": "LedGro",
-  "short_name": "LedGro",
-  "description": "Rentals, returns, payments and worker records — one ledger to grow your business.",
+  "name": "Plinthora",
+  "short_name": "Plinthora",
+  "description": "The foundation for your rental business — rentals, returns, payments and worker records in one place.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#f5f8f0",
+  "theme_color": "#081020",
   "orientation": "portrait-primary",
   "icons": [
     {

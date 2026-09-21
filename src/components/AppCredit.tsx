@@ -1,12 +1,12 @@
 import logo from "@/assets/logo.png";
 import { BrandLogo } from "@/components/BrandLogo";
 import { cn } from "@/lib/utils";
-import { PLATFORM_NAME } from "@/lib/brand";
+import { BrandName } from "@/components/BrandName";
 
 /**
- * "By <logo> LedGro" — the small app credit shown under the Sign out button.
+ * "By <logo> Plinthora" — the small app credit shown under the Sign out button.
  *
- * The logo is passed in explicitly (`src={logo}`) so it is always the LedGro
+ * The logo is passed in explicitly (`src={logo}`) so it is always the Plinthora
  * app logo, never the signed-in business's logo that BrandLogo would
  * otherwise default to.
  */
@@ -20,7 +20,7 @@ export function AppCredit({ className }: { className?: string }) {
     >
       <span>By</span>
       <BrandLogo src={logo} alt="" animated={false} ringWidth={1} className="h-4 w-4" />
-      <span className="font-bold tracking-tight text-foreground">{PLATFORM_NAME}</span>
+      <BrandName className="font-bold tracking-tight" />
     </div>
   );
 }
