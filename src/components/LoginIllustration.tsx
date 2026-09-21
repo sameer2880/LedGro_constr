@@ -3,8 +3,9 @@ import { useId } from "react";
 /**
  * Decorative login-screen illustration: a construction worker in a hi-vis
  * vest and hard hat holding up a phone that shows a miniature dashboard
- * screenshot — stat cards, a bar chart, a bottom nav row — echoing the
- * app's actual Dashboard page instead of a few abstract rectangles.
+ * screenshot — date / New Rental pills, the green Total Revenue card, the
+ * This Month card and the pill-bar Revenue chart — echoing the app's
+ * current Dashboard page instead of a few abstract rectangles.
  *
  * Colors are hardcoded (not `var(--color-*)`) on purpose — this is a
  * static decorative graphic on the signed-out screen, and CSS custom
@@ -68,6 +69,11 @@ export function LoginIllustration({ className }: { className?: string }) {
           <stop offset="0%" stopColor="#4f7a3d" />
           <stop offset="100%" stopColor="#8fc45f" />
         </linearGradient>
+        {/* hatched bar fill, like the dashboard's Revenue chart */}
+        <pattern id={id("hatch")} width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="3" height="3" fill="#4f7a3d" fillOpacity="0.3" />
+          <line x1="0" y1="0" x2="0" y2="3" stroke="#4f7a3d" strokeOpacity="0.5" strokeWidth="1.1" />
+        </pattern>
         <radialGradient id={id("ground")} cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#0f1a13" stopOpacity="0.16" />
           <stop offset="100%" stopColor="#0f1a13" stopOpacity="0" />
@@ -138,35 +144,56 @@ export function LoginIllustration({ className }: { className?: string }) {
       {/* speaker notch */}
       <rect x="174" y="34" width="16" height="3" rx="1.5" fill="#c7d3bd" />
 
-      {/* ---- mini "dashboard" screenshot on the phone screen ---- */}
-      {/* top app bar */}
-      <circle cx="159" cy="46" r="4.5" fill="#4f7a3d" />
-      <rect x="167" y="43.5" width="30" height="5" rx="2.5" fill="#2a3a2a" opacity="0.55" />
+      {/* ---- mini "dashboard" screenshot on the phone screen ----
+          Mirrors the current Dashboard page: date + "New Rental" pills, the
+          green Total Revenue card, the "This Month" card with its % badge,
+          and the Revenue bar chart (pill-shaped hatched bars, one solid
+          highlighted bar with a value tag, Monthly/Annually toggle). */}
 
-      {/* 2x2 stat cards */}
-      <rect x="155" y="55" width="26" height="20" rx="4" fill="#eaf3e2" />
-      <circle cx="161" cy="61.5" r="3" fill="#4f7a3d" />
-      <rect x="159" y="67" width="14" height="4.5" rx="2" fill="#3c4a3c" opacity="0.55" />
+      {/* header pills: date + New Rental */}
+      <rect x="155" y="40" width="31" height="8" rx="4" fill="#f4f7ef" stroke="#d7e2cd" strokeWidth="0.6" />
+      <circle cx="160" cy="44" r="1.8" fill="#8a9a80" />
+      <rect x="164" y="43" width="18" height="2" rx="1" fill="#2a3a2a" opacity="0.5" />
+      <rect x="189" y="40" width="22" height="8" rx="4" fill="#f4f7ef" stroke="#d7e2cd" strokeWidth="0.6" />
+      <path d="M194 44h3.6M195.8 42.2v3.6" stroke="#2a3a2a" strokeWidth="0.9" strokeLinecap="round" opacity="0.7" />
+      <rect x="200" y="43" width="8" height="2" rx="1" fill="#2a3a2a" opacity="0.5" />
 
-      <rect x="185" y="55" width="26" height="20" rx="4" fill="#fdecdd" />
-      <circle cx="191" cy="61.5" r="3" fill="#d5701f" />
-      <rect x="189" y="67" width="14" height="4.5" rx="2" fill="#5a4433" opacity="0.55" />
+      {/* Total Revenue — green card */}
+      <rect x="155" y="51" width="56" height="25" rx="5" fill="#4f7a3d" />
+      {/* soft decorative circles, kept inside the card */}
+      <circle cx="199" cy="63" r="9" fill="#ffffff" opacity="0.1" />
+      <circle cx="170" cy="72" r="4" fill="#ffffff" opacity="0.08" />
+      <rect x="160" y="55.5" width="11" height="3" rx="1.5" fill="#ffffff" opacity="0.9" />
+      <rect x="196" y="56" width="10" height="2" rx="1" fill="#ffffff" opacity="0.6" />
+      <rect x="160" y="62" width="30" height="5.5" rx="2.75" fill="#ffffff" opacity="0.95" />
+      <rect x="160" y="70.5" width="14" height="2" rx="1" fill="#ffffff" opacity="0.55" />
+      <rect x="192" y="70.5" width="14" height="2" rx="1" fill="#ffffff" opacity="0.55" />
 
-      <rect x="155" y="79" width="26" height="20" rx="4" fill="#e7eefb" />
-      <circle cx="161" cy="85.5" r="3" fill="#3b6ea5" />
-      <rect x="159" y="91" width="14" height="4.5" rx="2" fill="#33475a" opacity="0.55" />
+      {/* This Month — amount + % badge */}
+      <rect x="155" y="79" width="56" height="13" rx="4" fill="#f4f7ef" />
+      <rect x="159" y="82" width="14" height="2" rx="1" fill="#3c4a3c" opacity="0.4" />
+      <rect x="159" y="86.5" width="22" height="3.5" rx="1.75" fill="#3c4a3c" opacity="0.65" />
+      <rect x="190" y="83" width="17" height="6.5" rx="3.25" fill="#d8ebc9" />
+      <rect x="194" y="85.4" width="9" height="1.8" rx="0.9" fill="#3f7a2f" />
 
-      <rect x="185" y="79" width="26" height="20" rx="4" fill="#fdeaea" />
-      <circle cx="191" cy="85.5" r="3" fill="#c74b4b" />
-      <rect x="189" y="91" width="14" height="4.5" rx="2" fill="#5a3333" opacity="0.55" />
-
-      {/* mini bar chart */}
-      <rect x="155" y="103" width="56" height="27" rx="4" fill="#f4f7ef" />
-      <rect x="161" y="117" width="6" height="9" rx="1.5" fill={`url(#${id("bar")})`} />
-      <rect x="171" y="111" width="6" height="15" rx="1.5" fill={`url(#${id("bar")})`} />
-      <rect x="181" y="107" width="6" height="19" rx="1.5" fill={`url(#${id("bar")})`} />
-      <rect x="191" y="114" width="6" height="12" rx="1.5" fill={`url(#${id("bar")})`} />
-      <rect x="201" y="109" width="6" height="17" rx="1.5" fill={`url(#${id("bar")})`} />
+      {/* Revenue bar chart card */}
+      <rect x="155" y="95" width="56" height="37" rx="4" fill="#f4f7ef" />
+      <rect x="159" y="98" width="5.5" height="5.5" rx="1.8" fill="#dde6d3" />
+      <rect x="167" y="99.6" width="14" height="2.4" rx="1.2" fill="#2a3a2a" opacity="0.55" />
+      <rect x="187" y="98" width="20" height="5.5" rx="2.75" fill="#e3eadb" />
+      <rect x="196" y="98.6" width="10" height="4.3" rx="2.15" fill="#ffffff" />
+      {/* chart gridline */}
+      <path d="M159 120H207" stroke="#c9d6bd" strokeWidth="0.6" strokeDasharray="1.6 1.6" opacity="0.8" />
+      {/* bars: hatched, with one solid highlighted bar + value tag */}
+      <rect x="159.5" y="119" width="5.5" height="8" rx="2.75" fill={`url(#${id("hatch")})`} />
+      <rect x="168.5" y="115" width="5.5" height="12" rx="2.75" fill={`url(#${id("hatch")})`} />
+      <rect x="177.5" y="112" width="5.5" height="15" rx="2.75" fill="#4f7a3d" />
+      <rect x="186.5" y="116" width="5.5" height="11" rx="2.75" fill={`url(#${id("hatch")})`} />
+      <rect x="195.5" y="113.5" width="5.5" height="13.5" rx="2.75" fill={`url(#${id("hatch")})`} />
+      <rect x="204.5" y="118" width="5.5" height="9" rx="2.75" fill={`url(#${id("hatch")})`} />
+      {/* value tag above the highlighted bar */}
+      <rect x="172.5" y="105.5" width="16" height="5.5" rx="2.75" fill="#4f7a3d" />
+      <rect x="176" y="107.4" width="9" height="1.7" rx="0.85" fill="#ffffff" opacity="0.9" />
     </svg>
   );
 }
