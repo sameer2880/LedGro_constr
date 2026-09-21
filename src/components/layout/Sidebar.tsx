@@ -35,6 +35,7 @@ import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { ChangePasswordDialog } from "@/components/ChangePasswordDialog";
 import { WorkerLocationToggle } from "@/components/WorkerLocationToggle";
 import { BrandLogo } from "@/components/BrandLogo";
+import { AppCredit } from "@/components/AppCredit";
 import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useDeviceType } from "@/hooks/use-device";
@@ -349,6 +350,8 @@ function SidebarContent({
               </Button>
             </ConfirmDelete>
 
+            <AppCredit />
+
             <div className="text-[11px] leading-relaxed text-sidebar-foreground/60">
               {brandName}
             </div>
@@ -405,6 +408,8 @@ function SidebarContent({
                 Sign out
               </Button>
             </ConfirmDelete>
+
+            <AppCredit />
           </div>
         </>
       )}
@@ -484,21 +489,28 @@ function MoreMenuContent({
         )}
 
         <div className="mt-4 space-y-2.5 border-t border-sidebar-border pt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onToggleTheme}
-            className="w-full justify-center gap-2 font-semibold"
-          >
-            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            {dark ? "Light mode" : "Dark mode"}
-          </Button>
+          {/* Admin/manager: theme + account buttons sit side by side.
+              Worker: theme button stays full width, location toggle below. */}
+          <div className={cn(!isWorkerSidebar && "flex gap-2")}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onToggleTheme}
+              className={cn(
+                "justify-center gap-2 font-semibold",
+                isWorkerSidebar ? "w-full" : "min-w-0 flex-1 whitespace-nowrap px-2 text-xs",
+              )}
+            >
+              {dark ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
+              {dark ? "Light mode" : "Dark mode"}
+            </Button>
 
-          {isWorkerSidebar ? (
-            <WorkerLocationToggle workerId={workerId ?? null} />
-          ) : (
-            <ChangePasswordDialog />
-          )}
+            {!isWorkerSidebar && (
+              <ChangePasswordDialog className="min-w-0 flex-1 whitespace-nowrap px-2 text-xs" />
+            )}
+          </div>
+
+          {isWorkerSidebar && <WorkerLocationToggle workerId={workerId ?? null} />}
 
           {isWorkerSidebar && <ExploreLinks />}
 
@@ -537,6 +549,8 @@ function MoreMenuContent({
               Sign out
             </Button>
           </ConfirmDelete>
+
+          <AppCredit />
         </div>
       </div>
     </>
@@ -718,10 +732,10 @@ function BottomNav({
  * position, stays put for a few seconds so it can be read, then slides out to
  * the left and the cycle repeats.
  *
- * Timing (12s loop):  0-40% slide in  |  40-75% hold  |  75-100% slide out
+ * Timing (20s loop):  0-40% slide in  |  40-75% hold  |  75-100% slide out
  * Change MARQUEE_SECONDS to make the whole thing slower / faster.
  */
-const MARQUEE_SECONDS = 12;
+const MARQUEE_SECONDS = 20;
 
 function MobileMarqueeTitle({ text }: { text: string }) {
   return (

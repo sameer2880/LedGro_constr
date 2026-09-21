@@ -353,7 +353,7 @@ export function Gate({ children }: { children: ReactNode }) {
               <LoginIllustration className="h-56 w-56 drop-shadow-2xl" />
             </div>
             <div className="text-center text-white/90">
-              <p className="text-lg font-semibold">Centring &amp; shuttering, tracked end to end</p>
+              <p className="text-lg font-semibold">Track every rental. Grow every day.</p>
               <p className="mt-1 text-sm text-white/60">{PLATFORM_TAGLINE}</p>
             </div>
           </div>

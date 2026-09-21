@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import { UserCog, Shield, Crown, KeyRound } from "lucide-react";
 import { useSession } from "@/lib/auth/session";
+import { cn } from "@/lib/utils";
 
 const ROLE_DISPLAY = {
   manager: { label: "Manager", icon: Shield, className: "bg-primary/10 text-primary" },
@@ -20,7 +21,7 @@ const ROLE_DISPLAY = {
  * shows who they are and lets them change their own password (a real
  * Supabase Auth password — nothing is stored in the app's tables).
  */
-export function ChangePasswordDialog() {
+export function ChangePasswordDialog({ className }: { className?: string } = {}) {
   const [open, setOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [current, setCurrent] = useState("");
@@ -68,10 +69,10 @@ export function ChangePasswordDialog() {
       <Button
         variant="outline"
         size="sm"
-        className="w-full justify-center gap-2 font-semibold"
+        className={cn("w-full justify-center gap-2 font-semibold", className)}
         onClick={() => setOpen(true)}
       >
-        <UserCog className="h-4 w-4" />
+        <UserCog className="h-4 w-4 shrink-0" />
         Manage my account
       </Button>
 
