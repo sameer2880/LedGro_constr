@@ -728,45 +728,14 @@ function BottomNav({
 /* ------------------------------------------------------------------ */
 
 /**
- * The title slides in from the right edge, glides slowly to its resting
- * position, stays put for a few seconds so it can be read, then slides out to
- * the left and the cycle repeats.
- *
- * Timing (20s loop):  0-40% slide in  |  40-75% hold  |  75-100% slide out
- * Change MARQUEE_SECONDS to make the whole thing slower / faster.
+ * The business name shown in the mobile header, next to the logo.
+ * Static — no scrolling/sliding. If the name is too long for the
+ * available width it's simply truncated with an ellipsis.
  */
-const MARQUEE_SECONDS = 20;
-
 function MobileMarqueeTitle({ text }: { text: string }) {
   return (
-    <div className="relative h-6 min-w-0 flex-1 overflow-hidden">
-      <style>{`
-        @keyframes mbs-title-marquee {
-          0%   { left: 100%; transform: translateX(0);     animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1); }
-          40%  { left: 0;    transform: translateX(0);     animation-timing-function: linear; }
-          75%  { left: 0;    transform: translateX(0);     animation-timing-function: cubic-bezier(0.55, 0.06, 0.68, 0.19); }
-          100% { left: 0;    transform: translateX(-100%); }
-        }
-        .mbs-title-marquee {
-          position: absolute;
-          top: 0;
-          left: 100%;
-          white-space: nowrap;
-          animation: mbs-title-marquee ${MARQUEE_SECONDS}s infinite;
-          will-change: left, transform;
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .mbs-title-marquee {
-            animation: none;
-            left: 0;
-            max-width: 100%;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-        }
-      `}</style>
-
-      <h1 className="mbs-title-marquee text-fluid-sm font-bold leading-6 sm:text-base sm:leading-6">
+    <div className="min-w-0 flex-1">
+      <h1 className="truncate text-fluid-sm font-bold leading-6 sm:text-base sm:leading-6">
         {text}
       </h1>
     </div>

@@ -12,11 +12,12 @@ import {
 } from "@/components/ui/dialog";
 import { Eye, EyeOff } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { BrandName } from "@/components/BrandName";
 import { LoginIllustration } from "@/components/LoginIllustration";
 import { supabase } from "@/integrations/supabase/client";
 import { DEVICE_TOKEN_KEY } from "@/lib/auth/identity";
 import { resolveLoginFn } from "@/lib/api/auth.functions";
-import { PLATFORM_NAME, PLATFORM_TAGLINE } from "@/lib/brand";
+import { PLATFORM_TAGLINE } from "@/lib/brand";
 import {
   SessionContext,
   loadSessionState,
@@ -49,7 +50,7 @@ function CardShell({ children }: { children: ReactNode }) {
       <div className="w-full max-w-[420px] overflow-hidden rounded-[2rem] border border-border/60 bg-card p-7 shadow-[0_20px_60px_rgb(16_48_92/12%)] dark:shadow-[0_20px_60px_rgb(0_0_0/45%)] sm:p-9">
         <div className="mb-7 flex items-center gap-2">
           <BrandLogo className="h-9 w-9" />
-          <span className="text-lg font-bold tracking-tight text-foreground">{PLATFORM_NAME}</span>
+          <BrandName className="text-lg font-bold tracking-tight" />
         </div>
         {children}
       </div>
@@ -364,7 +365,7 @@ export function Gate({ children }: { children: ReactNode }) {
           <div className="w-full max-w-[360px]">
             <div className="mb-8 flex items-center gap-2.5">
               <BrandLogo className="h-10 w-10" />
-              <span className="text-lg font-bold tracking-tight text-foreground">{PLATFORM_NAME}</span>
+              <BrandName className="text-lg font-bold tracking-tight" />
             </div>
 
             <div className="mx-auto mb-6 flex h-32 w-32 items-center justify-center rounded-[1.75rem] bg-gradient-to-br from-[#eaf3e2] to-[#dbe9cd] lg:hidden">

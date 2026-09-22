@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/BrandLogo";
+import { BrandName } from "@/components/BrandName";
 
 // Keep in sync with the AndroidManifest `package` in the shipped APK.
 const ANDROID_PACKAGE = "com.mbscentring.works";
@@ -149,9 +150,7 @@ export function AppLanding() {
         <div className="mx-auto flex h-16 max-w-[1336px] items-center justify-between gap-3 px-5">
           <div className="flex min-w-0 items-center gap-3">
             <BrandLogo className="h-9 w-9 shrink-0" alt={PLATFORM_NAME} />
-            <span className="truncate text-lg font-bold tracking-tight">
-              {PLATFORM_NAME}
-            </span>
+            <BrandName className="truncate text-lg font-bold tracking-tight" />
           </div>
           <button
             onClick={toggleTheme}
