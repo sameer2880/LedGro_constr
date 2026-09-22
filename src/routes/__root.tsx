@@ -76,26 +76,97 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
+  // Live updates, app-wide: whenever a row changes in the database
+  // (from this tab, another tab, another device, or another user),
+  // the matching cached query is invalidated so React Query refetches
+  // it and every screen showing that data updates on its own —
+  // no manual refresh needed anywhere in the app.
+  //
+  // This only works once the tables below are added to Supabase's
+  // `supabase_realtime` publication (see the
+  // `20260902000000_enable_realtime_tables.sql` migration).
   useEffect(() => {
     const channel = supabase.channel("app-live-updates");
 
-    channel.on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "rentals" },
-      () => {
-        void queryClient.invalidateQueries({ queryKey: ["rentals"] });
-      },
-    );
+    const invalidate = (...keys: unknown[][]) => {
+      for (const key of keys) void queryClient.invalidateQueries({ queryKey: key });
+    };
 
+    const rowWorkerId = (payload: { new: unknown; old: unknown }) =>
+      (payload.new as { worker_id?: string } | null)?.worker_id ??
+      (payload.old as { worker_id?: string } | null)?.worker_id;
+
+    // rentals (rentals list, dashboard, reports, receipts list & detail)
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "rentals" }, () => {
+      invalidate(["rentals"], ["rental"], ["rental-group"]);
+    });
+
+    // workers (labour list, manage workers, rentals' worker dropdown)
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "workers" }, () => {
+      invalidate(["workers"]);
+    });
+
+    // attendance (labour calendar + per-worker attendance)
     channel.on(
       "postgres_changes",
       { event: "*", schema: "public", table: "worker_attendance" },
       (payload) => {
-        const workerId = (payload.new as { worker_id?: string } | null)?.worker_id ?? (payload.old as { worker_id?: string } | null)?.worker_id;
-        void queryClient.invalidateQueries({ queryKey: ["worker_attendance"] });
-        if (workerId) {
-          void queryClient.invalidateQueries({ queryKey: ["worker_attendance", workerId] });
-        }
+        invalidate(["worker_attendance"], ["all_attendance"]);
+        const workerId = rowWorkerId(payload);
+        if (workerId) invalidate(["worker_attendance", workerId]);
+      },
+    );
+
+    // worker payments (per-worker payment history)
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "worker_payments" },
+      (payload) => {
+        const workerId = rowWorkerId(payload);
+        if (workerId) invalidate(["worker_payments", workerId]);
+      },
+    );
+
+    // worker feedback (per-worker feedback + admin feedback inbox)
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "worker_feedback" },
+      (payload) => {
+        invalidate(["worker_feedback_admin"]);
+        const workerId = rowWorkerId(payload);
+        if (workerId) invalidate(["worker_feedback", workerId]);
+      },
+    );
+
+    // worker live locations (admin locations map)
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "worker_locations" },
+      () => {
+        invalidate(["worker-locations-admin"]);
+      },
+    );
+
+    // diary notes
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "diary_notes" }, () => {
+      invalidate(["diary_notes"]);
+    });
+
+    // platform admin console (businesses, per-business user counts, users)
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "businesses" }, () => {
+      invalidate(["platform"]);
+    });
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
+      invalidate(["platform"], ["workers"]);
+    });
+    channel.on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, () => {
+      invalidate(["platform"], ["workers"]);
+    });
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "platform_admins" },
+      () => {
+        invalidate(["platform"]);
       },
     );
 
