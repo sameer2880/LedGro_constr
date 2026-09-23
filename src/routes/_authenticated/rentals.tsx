@@ -10,6 +10,7 @@ import {
   buildGroupOverdueMessage,
   buildGroupNotReturnedMessage,
   buildGroupReturnMessage,
+  buildGroupReceiptMessage,
   whatsappUrl,
   getRentalRowTheme,
   type RentalGroup,
@@ -18,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Search, Pencil, Trash2, MessageCircle, CheckCircle2, Copy, Printer, Bell, IndianRupee, CircleDollarSign, SlidersHorizontal, X, ShieldAlert, Phone, Package } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, MessageCircle, CheckCircle2, Copy, Printer, Bell, IndianRupee, CircleDollarSign, SlidersHorizontal, X, ShieldAlert, Phone, Package, Share2 } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { PaymentBadge } from "@/components/PaymentBadge";
 import { RentalForm } from "@/components/RentalForm";
@@ -360,6 +361,9 @@ function RentalsPage() {
                             <Link to="/receipts/$id" params={{ id: g.rows[0].id }}>
                               <Printer className="h-4 w-4 mr-2" /> Print receipt
                             </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => window.open(whatsappUrl(g.customer_phone, buildGroupReceiptMessage(g.rows)), "_blank")}>
+                            <Share2 className="h-4 w-4 mr-2" /> Share Receipt
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive" onClick={() => setDelGroup(g)}>

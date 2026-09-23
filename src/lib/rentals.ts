@@ -354,10 +354,10 @@ We appreciate your business.
 Thank you for choosing ${businessLabel()}.`;
 }
 
-/** Absolute link to the printable receipt page for a rental. */
+/** Absolute link to the public, no-login-required receipt page for a rental. */
 export function receiptUrl(id: string) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  return `${origin}/receipts/${id}`;
+  return `${origin}/receipt/${id}`;
 }
 
 /** WhatsApp message that hands the customer a link to their printable receipt. */

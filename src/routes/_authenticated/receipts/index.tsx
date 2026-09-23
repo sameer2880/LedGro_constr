@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { listRentals, groupRentals } from "@/lib/rentals";
+import { listRentals, groupRentals, buildGroupReceiptMessage, whatsappUrl } from "@/lib/rentals";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Printer, Layers } from "lucide-react";
+import { Printer, Layers, Share2 } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 
 export const Route = createFileRoute("/_authenticated/receipts/")({
@@ -51,14 +51,24 @@ function ReceiptsList() {
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <div className="font-bold text-lg">₹{Number(g.total_amount).toLocaleString("en-IN")}</div>
-                <Button asChild size="sm" variant="outline">
-                  <Link to="/receipts/$id" params={{ id: g.rows[0].id }}>
-                    <Printer className="h-3.5 w-3.5 mr-1" />
-                    {g.rows.length > 1 ? "View combined" : "View"}
-                  </Link>
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/receipts/$id" params={{ id: g.rows[0].id }}>
+                      <Printer className="h-3.5 w-3.5 mr-1" />
+                      {g.rows.length > 1 ? "View combined" : "View"}
+                    </Link>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.open(whatsappUrl(g.customer_phone, buildGroupReceiptMessage(g.rows)), "_blank")}
+                  >
+                    <Share2 className="h-3.5 w-3.5 mr-1" />
+                    Share on WhatsApp
+                  </Button>
+                </div>
               </div>
               <div className="text-[11px] text-muted-foreground">
                 #{g.group_id.slice(0, 8).toUpperCase()} · {g.issue_date} → {g.return_date}

@@ -24,6 +24,7 @@ import { Route as AuthenticatedRentalsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedReportsRouteImport } from './routes/_authenticated/reports'
 import { Route as AuthenticatedWorkerRouteImport } from './routes/_authenticated/worker'
 import { Route as AuthenticatedWorkerLocationsRouteImport } from './routes/_authenticated/worker-locations'
+import { Route as ReceiptIdRouteImport } from './routes/receipt/$id'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as AuthenticatedLabourIndexRouteImport } from './routes/_authenticated/labour/index'
 import { Route as AuthenticatedLabourIdRouteImport } from './routes/_authenticated/labour/$id'
@@ -111,6 +112,11 @@ const AuthenticatedWorkerLocationsRoute =
     path: '/worker-locations',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ReceiptIdRoute = ReceiptIdRouteImport.update({
+  id: '/receipt/$id',
+  path: '/receipt/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/reports': typeof AuthenticatedReportsRoute
   '/worker': typeof AuthenticatedWorkerRoute
   '/worker-locations': typeof AuthenticatedWorkerLocationsRoute
+  '/receipt/$id': typeof ReceiptIdRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/labour/$id': typeof AuthenticatedLabourIdRoute
   '/platform/businesses': typeof AuthenticatedPlatformBusinessesRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByTo {
   '/reports': typeof AuthenticatedReportsRoute
   '/worker': typeof AuthenticatedWorkerRoute
   '/worker-locations': typeof AuthenticatedWorkerLocationsRoute
+  '/receipt/$id': typeof ReceiptIdRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/labour/$id': typeof AuthenticatedLabourIdRoute
   '/platform/businesses': typeof AuthenticatedPlatformBusinessesRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/_authenticated/reports': typeof AuthenticatedReportsRoute
   '/_authenticated/worker': typeof AuthenticatedWorkerRoute
   '/_authenticated/worker-locations': typeof AuthenticatedWorkerLocationsRoute
+  '/receipt/$id': typeof ReceiptIdRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/_authenticated/labour/$id': typeof AuthenticatedLabourIdRoute
   '/_authenticated/platform/businesses': typeof AuthenticatedPlatformBusinessesRoute
@@ -240,6 +249,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/worker'
     | '/worker-locations'
+    | '/receipt/$id'
     | '/.mcp/invoke-tool/$tool'
     | '/labour/$id'
     | '/platform/businesses'
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/reports'
     | '/worker'
     | '/worker-locations'
+    | '/receipt/$id'
     | '/.mcp/invoke-tool/$tool'
     | '/labour/$id'
     | '/platform/businesses'
@@ -287,6 +298,7 @@ export interface FileRouteTypes {
     | '/_authenticated/reports'
     | '/_authenticated/worker'
     | '/_authenticated/worker-locations'
+    | '/receipt/$id'
     | '/.mcp/invoke-tool/$tool'
     | '/_authenticated/labour/$id'
     | '/_authenticated/platform/businesses'
@@ -302,6 +314,7 @@ export interface RootRouteChildren {
   McpRoute: typeof McpRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  ReceiptIdRoute: typeof ReceiptIdRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 
@@ -412,6 +425,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkerLocationsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/receipt/$id': {
+      id: '/receipt/$id'
+      path: '/receipt/$id'
+      fullPath: '/receipt/$id'
+      preLoaderRoute: typeof ReceiptIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -512,6 +532,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  ReceiptIdRoute: ReceiptIdRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
 }
 export const routeTree = rootRouteImport
