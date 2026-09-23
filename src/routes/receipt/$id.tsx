@@ -18,6 +18,11 @@ export const Route = createFileRoute("/receipt/$id")({
       { property: "og:description", content: "A printable construction material rental receipt." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      // Always render the desktop layout, even on a phone — a customer opening
+      // a shared receipt link shouldn't get the mobile-shrunk version. Overrides
+      // the app-wide "width=device-width" viewport set in __root.tsx for this
+      // route only; the page stays pinch-zoomable and horizontally scrollable.
+      { name: "viewport", content: "width=1024, initial-scale=1" },
     ],
   }),
   component: PublicReceiptPage,
