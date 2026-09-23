@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { BrandName } from "@/components/BrandName";
 import { LoginIllustration } from "@/components/LoginIllustration";
@@ -281,8 +281,9 @@ export function Gate({ children }: { children: ReactNode }) {
 
   if (phase === "loading") {
     return (
-      <div className="min-h-dvh flex items-center justify-center bg-background p-4 text-sm text-muted-foreground">
-        Loading...
+      <div className="min-h-dvh flex flex-col items-center justify-center gap-3 bg-background p-4 text-sm text-muted-foreground">
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <span>Loading...</span>
       </div>
     );
   }

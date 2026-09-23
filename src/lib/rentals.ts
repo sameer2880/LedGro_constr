@@ -354,6 +354,80 @@ We appreciate your business.
 Thank you for choosing ${businessLabel()}.`;
 }
 
+/** Sent when materials are returned AND fully paid — a clean closing receipt. */
+export function buildReturnPaidMessage(r: Rental) {
+  const returnedOn = new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+  return `Hello ${r.customer_name},
+
+Thank you for returning the rented material ${r.material_name}.
+
+The material was returned on ${returnedOn} and payment of ₹${Number(r.total_amount).toLocaleString("en-IN")} has been received in full. This rental is now fully settled.
+
+We appreciate your business.
+
+Thank you for choosing ${businessLabel()}.`;
+}
+
+/** Group version of buildReturnPaidMessage. */
+export function buildGroupReturnPaidMessage(rows: Rental[]) {
+  if (rows.length === 0) return "";
+  if (rows.length === 1) return buildReturnPaidMessage(rows[0]);
+  const first = rows[0];
+  const returnedOn = new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+  const lines = rows.map((r) => `- ${r.material_name} (Qty: ${r.quantity} ${r.unit})`).join("\n");
+  const total = rows.reduce((s, r) => s + Number(r.total_amount || 0), 0);
+
+  return `Hello ${first.customer_name},
+
+Thank you for returning the rented materials:
+${lines}
+
+The materials were returned on ${returnedOn} and payment of ₹${total.toLocaleString("en-IN")} has been received in full. This rental is now fully settled.
+
+We appreciate your business.
+
+Thank you for choosing ${businessLabel()}.`;
+}
+
+/** Sent when materials are returned but payment is still pending — a payment-due reminder. */
+export function buildReturnNotPaidMessage(r: Rental) {
+  const returnedOn = new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+  const advance = Number(r.security_deposit || 0);
+  const balance = Number(r.total_amount || 0) - advance;
+  return `Hello ${r.customer_name},
+
+Thank you for returning the rented material ${r.material_name} on ${returnedOn}.
+
+However, as per our records, a balance of ₹${balance.toLocaleString("en-IN")} is still pending on this rental.
+
+Kindly clear the pending amount at the earliest.
+
+Thank you for choosing ${businessLabel()}.`;
+}
+
+/** Group version of buildReturnNotPaidMessage. */
+export function buildGroupReturnNotPaidMessage(rows: Rental[]) {
+  if (rows.length === 0) return "";
+  if (rows.length === 1) return buildReturnNotPaidMessage(rows[0]);
+  const first = rows[0];
+  const returnedOn = new Date().toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" });
+  const lines = rows.map((r) => `- ${r.material_name} (Qty: ${r.quantity} ${r.unit})`).join("\n");
+  const total = rows.reduce((s, r) => s + Number(r.total_amount || 0), 0);
+  const advance = rows.reduce((s, r) => s + Number(r.security_deposit || 0), 0);
+  const balance = total - advance;
+
+  return `Hello ${first.customer_name},
+
+Thank you for returning the rented materials on ${returnedOn}:
+${lines}
+
+However, as per our records, a balance of ₹${balance.toLocaleString("en-IN")} is still pending on this rental.
+
+Kindly clear the pending amount at the earliest.
+
+Thank you for choosing ${businessLabel()}.`;
+}
+
 /** Absolute link to the public, no-login-required receipt page for a rental. */
 export function receiptUrl(id: string) {
   const origin = typeof window !== "undefined" ? window.location.origin : "";

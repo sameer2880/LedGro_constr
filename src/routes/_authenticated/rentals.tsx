@@ -10,6 +10,8 @@ import {
   buildGroupOverdueMessage,
   buildGroupNotReturnedMessage,
   buildGroupReturnMessage,
+  buildGroupReturnPaidMessage,
+  buildGroupReturnNotPaidMessage,
   buildGroupReceiptMessage,
   whatsappUrl,
   getRentalRowTheme,
@@ -19,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Plus, Search, Pencil, Trash2, MessageCircle, CheckCircle2, Copy, Printer, Bell, IndianRupee, CircleDollarSign, SlidersHorizontal, X, ShieldAlert, Phone, Package, Share2 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, MessageCircle, CheckCircle2, Copy, Printer, Bell, IndianRupee, CircleDollarSign, SlidersHorizontal, X, ShieldAlert, Phone, Package, Share2, BadgeCheck, AlertTriangle } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { PaymentBadge } from "@/components/PaymentBadge";
 import { RentalForm } from "@/components/RentalForm";
@@ -346,6 +348,16 @@ function RentalsPage() {
                           {g.status === "returned" && (
                             <DropdownMenuItem onClick={() => window.open(whatsappUrl(g.customer_phone, buildGroupReturnMessage(g.rows)), "_blank")}>
                               <CheckCircle2 className="h-4 w-4 mr-2" /> WhatsApp return confirmation
+                            </DropdownMenuItem>
+                          )}
+                          {g.status === "returned" && g.payment_status === "paid" && (
+                            <DropdownMenuItem onClick={() => window.open(whatsappUrl(g.customer_phone, buildGroupReturnPaidMessage(g.rows)), "_blank")}>
+                              <BadgeCheck className="h-4 w-4 mr-2" /> WhatsApp returned & paid
+                            </DropdownMenuItem>
+                          )}
+                          {g.status === "returned" && g.payment_status === "unpaid" && (
+                            <DropdownMenuItem onClick={() => window.open(whatsappUrl(g.customer_phone, buildGroupReturnNotPaidMessage(g.rows)), "_blank")}>
+                              <AlertTriangle className="h-4 w-4 mr-2" /> WhatsApp returned, payment due
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem
