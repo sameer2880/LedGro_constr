@@ -157,6 +157,13 @@ function PublicReceiptPage() {
           </div>
         </div>
 
+        {/* Signature */}
+        <div className="mb-10 flex justify-end">
+          <div className="w-52 pt-14 text-center">
+            <div className="border-t border-gray-300 pt-1 text-xs font-medium text-gray-500">Authorized Signature</div>
+          </div>
+        </div>
+
         {/* Terms & notes */}
         {receipt.notes && (
           <div className="border-t border-gray-200 pt-6">
