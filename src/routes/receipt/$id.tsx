@@ -3,12 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { getPublicReceiptFn } from "@/lib/api/receipts.functions";
 import type { Rental } from "@/lib/rentals";
 import { computeStatus, groupRentals } from "@/lib/rentals";
-import { Button } from "@/components/ui/button";
-import { Printer } from "lucide-react";
 import { PLATFORM_NAME } from "@/lib/brand";
 
 // Public on purpose — this is the page "Share Receipt" WhatsApp links open,
-// so the customer can view (and print) it without ever signing in. It fetches
+// so the customer can view it without ever signing in. It fetches
 // through a server function backed by the service role, not the logged-in
 // user's session, so it works the same whether or not anyone is signed in.
 export const Route = createFileRoute("/receipt/$id")({
@@ -42,16 +40,9 @@ function PublicReceiptPage() {
   const receiptNumber = rows.length > 1 ? rows[0].group_id || rows[0].id : rows[0].id;
   const logo = business?.logo_url ?? null;
   const stamp = business?.stamp_url ?? null;
-  const signature = business?.signature_url ?? null;
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4 sm:p-6">
-      <div className="flex items-center justify-end print:hidden">
-        <Button onClick={() => window.print()}>
-          <Printer className="h-4 w-4 mr-1.5" /> Print Receipt
-        </Button>
-      </div>
-
       <article className="receipt-sheet mx-auto max-w-3xl rounded-2xl border border-gray-200 bg-white p-6 text-gray-700 shadow-sm sm:p-10 print:rounded-none print:border-0 print:shadow-none">
         {/* Title + From */}
         <div className="mb-8 flex items-start justify-between gap-6">
@@ -166,13 +157,6 @@ function PublicReceiptPage() {
         {/* Signature */}
         <div className="mb-10 flex justify-end">
           <div className="relative w-52 pt-14 text-center">
-            {signature && (
-              <img
-                src={signature}
-                alt="Authorized signature"
-                className="pointer-events-none absolute left-1/2 top-2 h-16 w-40 -translate-x-1/2 object-contain opacity-90 grayscale print:opacity-90"
-              />
-            )}
             {stamp && (
               <img
                 src={stamp}
