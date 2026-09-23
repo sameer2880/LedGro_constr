@@ -1,8 +1,21 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { MessageSquare } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { MessageSquare, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AdminOnly } from "@/components/AdminOnly";
 import { isMasterAdmin } from "@/lib/auth/access";
 
@@ -22,6 +35,9 @@ export const Route = createFileRoute("/_authenticated/feedback")({
 });
 
 function FeedbackPage() {
+  const qc = useQueryClient();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const { data: feedback = [], isLoading } = useQuery({
     queryKey: ["worker_feedback_admin"],
     queryFn: async () => {
@@ -44,16 +60,44 @@ function FeedbackPage() {
     enabled: isMasterAdmin(),
   });
 
+  const clearAll = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("worker_feedback")
+        .delete()
+        .not("id", "is", null);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["worker_feedback_admin"] });
+      toast.success("Feedback cleared");
+      setConfirmOpen(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <AdminOnly label="Worker Feedback">
     <div className="space-y-5">
-      <div>
-        <h2 className="flex items-center gap-2 text-2xl font-bold">
-          <MessageSquare className="h-5 w-5 text-primary" /> Worker Feedback
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Attendance and payment feedback submitted by workers.
-        </p>
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h2 className="flex items-center gap-2 text-2xl font-bold">
+            <MessageSquare className="h-5 w-5 text-primary" /> Worker Feedback
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Attendance and payment feedback submitted by workers.
+          </p>
+        </div>
+        {feedback.length > 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            className="text-destructive hover:text-destructive"
+            onClick={() => setConfirmOpen(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" /> Clear feedbacks
+          </Button>
+        )}
       </div>
 
       {isLoading ? (
@@ -102,6 +146,31 @@ function FeedbackPage() {
           ))}
         </div>
       )}
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear all feedback?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes every attendance and payment feedback entry submitted by
+              workers. This can't be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={clearAll.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={clearAll.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                clearAll.mutate();
+              }}
+            >
+              {clearAll.isPending ? "Clearing…" : "Clear all"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
     </AdminOnly>
   );

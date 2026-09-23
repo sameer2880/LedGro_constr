@@ -10,7 +10,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
+import { Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { BrandName } from "@/components/BrandName";
 import { LoginIllustration } from "@/components/LoginIllustration";
@@ -74,6 +86,130 @@ export function Gate({ children }: { children: ReactNode }) {
   const [showPassword, setShowPassword] = useState(false);
   // Help dialog opened by "Forgot password?" / "Contact your admin".
   const [help, setHelp] = useState<"forgot" | "access" | null>(null);
+
+  // Set when sign-in finds this worker/manager account already signed in on
+  // another device — holds the freshly loaded session so we can resume once
+  // the person confirms the takeover in the dialog below.
+  const [deviceConflict, setDeviceConflict] = useState<SessionState | null>(null);
+  const [claimingDevice, setClaimingDevice] = useState(false);
+
+  /* ---------- forgot password: email OTP flow ---------- */
+  const [forgotStep, setForgotStep] = useState<"request" | "otp" | "reset" | "done">("request");
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotOtp, setForgotOtp] = useState("");
+  const [forgotPassword, setForgotPassword] = useState("");
+  const [forgotPasswordConfirm, setForgotPasswordConfirm] = useState("");
+  const [forgotErr, setForgotErr] = useState("");
+  const [forgotBusy, setForgotBusy] = useState(false);
+  const [resendIn, setResendIn] = useState(0);
+
+  const resetForgotFlow = useCallback(() => {
+    setForgotStep("request");
+    setForgotEmail("");
+    setForgotOtp("");
+    setForgotPassword("");
+    setForgotPasswordConfirm("");
+    setForgotErr("");
+    setForgotBusy(false);
+    setResendIn(0);
+  }, []);
+
+  // 30s cooldown before "Resend code" can be used again.
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = window.setInterval(() => setResendIn((s) => (s > 0 ? s - 1 : 0)), 1000);
+    return () => window.clearInterval(t);
+  }, [resendIn]);
+
+  const sendForgotOtp = async (e: FormEvent) => {
+    e.preventDefault();
+    setForgotErr("");
+    const email = forgotEmail.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      setForgotErr("Enter a valid email address");
+      return;
+    }
+    setForgotBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      if (error) {
+        setForgotErr(error.message || "Unable to send the code. Please try again.");
+        return;
+      }
+      setForgotEmail(email);
+      setForgotOtp("");
+      setForgotStep("otp");
+      setResendIn(30);
+    } finally {
+      setForgotBusy(false);
+    }
+  };
+
+  const resendForgotOtp = async () => {
+    if (resendIn > 0 || forgotBusy) return;
+    setForgotErr("");
+    setForgotBusy(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail);
+      if (error) {
+        setForgotErr(error.message || "Unable to resend the code. Please try again.");
+        return;
+      }
+      setResendIn(30);
+    } finally {
+      setForgotBusy(false);
+    }
+  };
+
+  const verifyForgotOtp = async (e: FormEvent) => {
+    e.preventDefault();
+    setForgotErr("");
+    if (forgotOtp.trim().length !== 6) {
+      setForgotErr("Enter the 6-digit code sent to your email");
+      return;
+    }
+    setForgotBusy(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: forgotEmail,
+        token: forgotOtp.trim(),
+        type: "recovery",
+      });
+      if (error) {
+        setForgotErr(/expired/i.test(error.message) ? "This code has expired. Request a new one." : "Incorrect or expired code");
+        return;
+      }
+      setForgotStep("reset");
+    } finally {
+      setForgotBusy(false);
+    }
+  };
+
+  const submitForgotReset = async (e: FormEvent) => {
+    e.preventDefault();
+    setForgotErr("");
+    const password = forgotPassword.trim();
+    if (password.length < 6) {
+      setForgotErr("Password must be at least 6 characters");
+      return;
+    }
+    if (password !== forgotPasswordConfirm.trim()) {
+      setForgotErr("Passwords do not match");
+      return;
+    }
+    setForgotBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        setForgotErr(error.message || "Unable to reset your password");
+        return;
+      }
+      await supabase.auth.signOut();
+      setForgotStep("done");
+    } finally {
+      setForgotBusy(false);
+    }
+  };
 
   // First-sign-in "choose your own password" step.
   const [newPassword, setNewPassword] = useState("");
@@ -192,6 +328,34 @@ export function Gate({ children }: { children: ReactNode }) {
     }
   }, [navigate, pathname, phase, state]);
 
+  // Claims this device for a worker/manager account and lands them on the
+  // right screen. Shared by the plain sign-in path and the "log out that
+  // device and continue here?" confirmation below.
+  const finishDeviceLogin = useCallback(
+    async (next: SessionState) => {
+      const me = next.me!;
+      let finalNext = next;
+      if (me.workerId) {
+        const token = crypto.randomUUID();
+        const { error: claimError } = await supabase.rpc("claim_device", { p_token: token });
+        if (claimError) {
+          await supabase.auth.signOut();
+          setErr("Unable to start your device session");
+          return;
+        }
+        localStorage.setItem(DEVICE_TOKEN_KEY, token);
+        finalNext = { ...next, me: { ...me, sessionToken: token } };
+      }
+      applyState(finalNext);
+      setPhase("ready");
+      setP("");
+      const destination =
+        me.role === "worker" ? "/worker" : me.role === "super_admin" ? "/platform/businesses" : "/dashboard";
+      void navigate({ to: destination, replace: true });
+    },
+    [applyState, navigate],
+  );
+
   /* ---------- sign in ---------- */
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -224,38 +388,37 @@ export function Gate({ children }: { children: ReactNode }) {
         setErr(res.message || "Unable to sign in");
         return;
       }
-      let next = res.state;
+      const next = res.state;
       const me = next.me!;
       if (me.workerId) {
         const local = localStorage.getItem(DEVICE_TOKEN_KEY);
         if (me.sessionToken && me.sessionToken !== local) {
-          const takeOver = window.confirm(
-            "This account is already signed in on another device. Log out that device and continue here?",
-          );
-          if (!takeOver) {
-            await supabase.auth.signOut();
-            return;
-          }
-        }
-        const token = crypto.randomUUID();
-        const { error: claimError } = await supabase.rpc("claim_device", { p_token: token });
-        if (claimError) {
-          await supabase.auth.signOut();
-          setErr("Unable to start your device session");
+          // Hand off to the "sign in on another device" dialog instead of
+          // finishing here — it calls finishDeviceLogin once confirmed.
+          setDeviceConflict(next);
           return;
         }
-        localStorage.setItem(DEVICE_TOKEN_KEY, token);
-        next = { ...next, me: { ...me, sessionToken: token } };
       }
-      applyState(next);
-      setPhase("ready");
-      setP("");
-      const destination =
-        me.role === "worker" ? "/worker" : me.role === "super_admin" ? "/platform/businesses" : "/dashboard";
-      void navigate({ to: destination, replace: true });
+      await finishDeviceLogin(next);
     } finally {
       setBusy(false);
     }
+  };
+
+  const confirmDeviceTakeover = async () => {
+    if (!deviceConflict) return;
+    setClaimingDevice(true);
+    try {
+      await finishDeviceLogin(deviceConflict);
+    } finally {
+      setClaimingDevice(false);
+      setDeviceConflict(null);
+    }
+  };
+
+  const cancelDeviceTakeover = async () => {
+    setDeviceConflict(null);
+    await supabase.auth.signOut();
   };
 
   /* ---------- first sign-in: choose your own password ---------- */
@@ -423,7 +586,10 @@ export function Gate({ children }: { children: ReactNode }) {
               <div className="flex justify-end pb-2 pt-0.5">
                 <button
                   type="button"
-                  onClick={() => setHelp("forgot")}
+                  onClick={() => {
+                    resetForgotFlow();
+                    setHelp("forgot");
+                  }}
                   className="text-sm font-semibold text-primary transition-opacity hover:opacity-80 hover:underline focus-visible:outline-none focus-visible:underline"
                 >
                   Forgot password?
@@ -453,9 +619,17 @@ export function Gate({ children }: { children: ReactNode }) {
         </div>
       </div>
 
-      <Dialog open={help !== null} onOpenChange={(open) => !open && setHelp(null)}>
+      <Dialog
+        open={help !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setHelp(null);
+            resetForgotFlow();
+          }
+        }}
+      >
         <DialogContent className="max-w-[400px] rounded-[1.5rem] sm:p-7">
-          {help === "access" ? (
+          {help === "access" && (
             <>
               <DialogHeader>
                 <DialogTitle>Need access?</DialogTitle>
@@ -468,34 +642,211 @@ export function Gate({ children }: { children: ReactNode }) {
                 Once you're added, sign in with your mobile number as the password. You'll be asked
                 to choose your own password right after.
               </p>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  className="h-11 w-full rounded-full font-semibold"
+                  onClick={() => setHelp(null)}
+                >
+                  Got it
+                </Button>
+              </DialogFooter>
             </>
-          ) : (
+          )}
+
+          {help === "forgot" && forgotStep === "request" && (
             <>
               <DialogHeader>
                 <DialogTitle>Forgot your password?</DialogTitle>
                 <DialogDescription>
-                  For security, passwords are reset by your admin — there's no reset link to wait
-                  for.
+                  Enter your account email and we'll send you a 6-digit code to reset your password.
                 </DialogDescription>
               </DialogHeader>
-              <ol className="list-decimal space-y-2 pl-5 text-sm text-muted-foreground marker:font-semibold marker:text-primary">
-                <li>Ask your admin to reset your password (workers can also ask their manager).</li>
-                <li>Sign in with your mobile number as the password.</li>
-                <li>Choose a new password when asked.</li>
-              </ol>
+              <form onSubmit={sendForgotOtp} className="space-y-4">
+                <Input
+                  type="email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  autoFocus
+                  autoComplete="email"
+                  placeholder="Email address"
+                  className={inputClass}
+                />
+                {forgotErr && <p className="text-xs font-medium text-destructive">{forgotErr}</p>}
+                <DialogFooter className="gap-2 sm:gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 flex-1 rounded-full"
+                    onClick={() => setHelp(null)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={forgotBusy} className="h-11 flex-1 rounded-full font-semibold">
+                    {forgotBusy ? "Sending…" : "Send code"}
+                  </Button>
+                </DialogFooter>
+              </form>
             </>
           )}
-          <DialogFooter>
-            <Button
-              type="button"
-              className="h-11 w-full rounded-full font-semibold"
-              onClick={() => setHelp(null)}
-            >
-              Got it
-            </Button>
-          </DialogFooter>
+
+          {help === "forgot" && forgotStep === "otp" && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Enter the code</DialogTitle>
+                <DialogDescription>
+                  We sent a 6-digit code to <span className="font-medium text-foreground">{forgotEmail}</span>.
+                  It expires shortly, so enter it soon.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={verifyForgotOtp} className="space-y-4">
+                <div className="flex justify-center py-1">
+                  <InputOTP
+                    maxLength={6}
+                    pattern={REGEXP_ONLY_DIGITS}
+                    value={forgotOtp}
+                    onChange={(value) => setForgotOtp(value)}
+                    autoFocus
+                  >
+                    <InputOTPGroup>
+                      <InputOTPSlot index={0} />
+                      <InputOTPSlot index={1} />
+                      <InputOTPSlot index={2} />
+                      <InputOTPSlot index={3} />
+                      <InputOTPSlot index={4} />
+                      <InputOTPSlot index={5} />
+                    </InputOTPGroup>
+                  </InputOTP>
+                </div>
+                {forgotErr && <p className="text-center text-xs font-medium text-destructive">{forgotErr}</p>}
+                <div className="text-center">
+                  <button
+                    type="button"
+                    onClick={() => void resendForgotOtp()}
+                    disabled={resendIn > 0 || forgotBusy}
+                    className="text-sm font-semibold text-primary transition-opacity hover:opacity-80 hover:underline disabled:cursor-not-allowed disabled:text-muted-foreground disabled:no-underline disabled:opacity-70"
+                  >
+                    {resendIn > 0 ? `Resend code in ${resendIn}s` : "Resend code"}
+                  </button>
+                </div>
+                <DialogFooter className="gap-2 sm:gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-11 flex-1 rounded-full"
+                    onClick={() => setForgotStep("request")}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={forgotBusy || forgotOtp.trim().length !== 6}
+                    className="h-11 flex-1 rounded-full font-semibold"
+                  >
+                    {forgotBusy ? "Verifying…" : "Verify"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </>
+          )}
+
+          {help === "forgot" && forgotStep === "reset" && (
+            <>
+              <DialogHeader>
+                <DialogTitle>Choose a new password</DialogTitle>
+                <DialogDescription>Your code is verified. Set a new password to finish.</DialogDescription>
+              </DialogHeader>
+              <form onSubmit={submitForgotReset} className="space-y-4">
+                <Input
+                  type="password"
+                  value={forgotPassword}
+                  onChange={(e) => setForgotPassword(e.target.value)}
+                  autoFocus
+                  autoComplete="new-password"
+                  placeholder="New password (min. 6 characters)"
+                  className={inputClass}
+                />
+                <Input
+                  type="password"
+                  value={forgotPasswordConfirm}
+                  onChange={(e) => setForgotPasswordConfirm(e.target.value)}
+                  autoComplete="new-password"
+                  placeholder="Confirm new password"
+                  className={inputClass}
+                />
+                {forgotErr && <p className="text-xs font-medium text-destructive">{forgotErr}</p>}
+                <DialogFooter>
+                  <Button
+                    type="submit"
+                    disabled={forgotBusy}
+                    className="h-11 w-full rounded-full font-semibold"
+                  >
+                    {forgotBusy ? "Saving…" : "Reset password"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </>
+          )}
+
+          {help === "forgot" && forgotStep === "done" && (
+            <>
+              <DialogHeader>
+                <div className="mb-1 flex justify-center">
+                  <CheckCircle2 className="h-10 w-10 text-primary" />
+                </div>
+                <DialogTitle className="text-center">Password reset</DialogTitle>
+                <DialogDescription className="text-center">
+                  Your password has been updated. Sign in with your new password.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  className="h-11 w-full rounded-full font-semibold"
+                  onClick={() => {
+                    setHelp(null);
+                    resetForgotFlow();
+                  }}
+                >
+                  Back to sign in
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={deviceConflict !== null}
+        onOpenChange={(open) => {
+          if (!open && !claimingDevice) void cancelDeviceTakeover();
+        }}
+      >
+        <AlertDialogContent className="max-w-[400px] rounded-[1.5rem] sm:p-7">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Already signed in elsewhere</AlertDialogTitle>
+            <AlertDialogDescription>
+              This account is already signed in on another device. Log out that device and continue
+              here?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-2">
+            <AlertDialogCancel disabled={claimingDevice} className="h-11 flex-1 rounded-full">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={claimingDevice}
+              className="h-11 flex-1 rounded-full font-semibold"
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmDeviceTakeover();
+              }}
+            >
+              {claimingDevice ? "Signing in…" : "Log out & continue"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
