@@ -39,6 +39,7 @@ export type Database = {
         Row: {
           active: boolean;
           created_at: string;
+          enabled_pages: string[];
           id: string;
           instagram_url: string | null;
           location: string | null;
@@ -59,6 +60,7 @@ export type Database = {
         Insert: {
           active?: boolean;
           created_at?: string;
+          enabled_pages?: string[];
           id?: string;
           instagram_url?: string | null;
           location?: string | null;
@@ -79,6 +81,7 @@ export type Database = {
         Update: {
           active?: boolean;
           created_at?: string;
+          enabled_pages?: string[];
           id?: string;
           instagram_url?: string | null;
           location?: string | null;

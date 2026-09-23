@@ -8,12 +8,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { createBusinessFn, deleteBusinessFn } from "@/lib/api/businesses.functions";
 import { isSuperAdmin } from "@/lib/auth/access";
 import { MOBILE_REGEX } from "@/lib/auth/identity";
 import { PLATFORM_NAME } from "@/lib/brand";
+import { ALL_FEATURE_KEYS, FEATURE_PAGES, type FeatureKey } from "@/lib/features";
 import type { Business } from "@/lib/auth/session";
 
 export const Route = createFileRoute("/_authenticated/platform/businesses")({
@@ -33,7 +35,45 @@ const emptyCreate = () => ({
   adminPhone: "",
   adminEmail: "",
   adminUsername: "",
+  enabledPages: [...ALL_FEATURE_KEYS] as FeatureKey[],
 });
+
+/** Checkbox grid used in both the Add and Edit business dialogs. */
+function PageAssignment({
+  value,
+  onChange,
+}: {
+  value: FeatureKey[];
+  onChange: (next: FeatureKey[]) => void;
+}) {
+  const toggle = (key: FeatureKey, checked: boolean) => {
+    onChange(checked ? [...value, key] : value.filter((k) => k !== key));
+  };
+
+  return (
+    <div>
+      <Label>Pages for this business</Label>
+      <p className="mb-2 text-xs text-muted-foreground">
+        Only the pages you turn on here appear for this business's admin, managers and workers.
+      </p>
+      <div className="grid grid-cols-2 gap-2 rounded-md border border-border p-3">
+        {FEATURE_PAGES.map((f) => (
+          <label key={f.key} className="flex items-start gap-2 text-sm">
+            <Checkbox
+              checked={value.includes(f.key)}
+              onCheckedChange={(checked) => toggle(f.key, checked === true)}
+              className="mt-0.5"
+            />
+            <span>
+              <span className="block font-medium">{f.label}</span>
+              <span className="block text-xs text-muted-foreground">{f.description}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 type UserCounts = Record<string, { users: number; admins: number }>;
 
@@ -96,6 +136,7 @@ function PlatformBusinesses() {
           adminPhone,
           adminEmail: form.adminEmail.trim() || undefined,
           adminUsername: form.adminUsername.trim() || undefined,
+          enabledPages: form.enabledPages,
         },
       });
       return adminPhone;
@@ -121,6 +162,7 @@ function PlatformBusinesses() {
           location: nullable(b.location),
           owner_line: nullable(b.owner_line),
           phone: nullable(b.phone),
+          enabled_pages: b.enabled_pages,
         })
         .eq("id", b.id);
       if (error) throw error;
@@ -215,6 +257,19 @@ function PlatformBusinesses() {
                   </div>
                   <div className="mt-1 text-xs text-muted-foreground">
                     {c.users} user{c.users === 1 ? "" : "s"} · {c.admins} admin{c.admins === 1 ? "" : "s"}
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {FEATURE_PAGES.filter((f) => (b.enabled_pages ?? []).includes(f.key)).map((f) => (
+                      <span
+                        key={f.key}
+                        className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
+                      >
+                        {f.label}
+                      </span>
+                    ))}
+                    {(b.enabled_pages ?? []).length === 0 && (
+                      <span className="text-[10px] text-muted-foreground">No optional pages assigned yet</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -323,6 +378,13 @@ function PlatformBusinesses() {
                 first-time password — they're asked to choose their own straight away.
               </p>
             </div>
+
+            <div className="border-t border-border pt-3">
+              <PageAssignment
+                value={form.enabledPages}
+                onChange={(enabledPages) => setForm({ ...form, enabledPages })}
+              />
+            </div>
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setCreateOpen(false)}>
@@ -367,6 +429,13 @@ function PlatformBusinesses() {
               <div>
                 <Label>Business phone</Label>
                 <Input value={editing.phone ?? ""} onChange={(e) => setEditing({ ...editing, phone: e.target.value })} inputMode="tel" />
+              </div>
+
+              <div className="border-t border-border pt-3">
+                <PageAssignment
+                  value={(editing.enabled_pages ?? []) as FeatureKey[]}
+                  onChange={(enabled_pages) => setEditing({ ...editing, enabled_pages })}
+                />
               </div>
             </div>
           )}

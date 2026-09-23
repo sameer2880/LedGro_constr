@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { emailSchema, phoneSchema, usernameSchema, type UserContext } from "./schemas";
+import { ALL_FEATURE_KEYS } from "@/lib/features";
 
 /**
  * Platform admin only: create a business (with its first admin) and delete one.
@@ -23,6 +24,8 @@ export const createBusinessFn = createServerFn({ method: "POST" })
         adminPhone: phoneSchema,
         adminEmail: emailSchema,
         adminUsername: usernameSchema,
+        /** Which optional pages to turn on for this business. Defaults to all of them. */
+        enabledPages: z.array(z.enum(ALL_FEATURE_KEYS as [string, ...string[]])).optional(),
       })
       .parse(input),
   )
@@ -39,6 +42,7 @@ export const createBusinessFn = createServerFn({ method: "POST" })
         location: data.location || null,
         owner_line: data.owner_line || null,
         phone: data.phone || null,
+        enabled_pages: data.enabledPages ?? ALL_FEATURE_KEYS,
       })
       .select("id")
       .single();

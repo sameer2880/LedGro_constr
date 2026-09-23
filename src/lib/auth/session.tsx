@@ -22,6 +22,8 @@ export interface Business {
   maps_url: string | null;
   reels_url: string | null;
   active: boolean;
+  /** Which optional pages the platform admin has turned on for this business. See lib/features.ts. */
+  enabled_pages: string[];
 }
 
 export interface Me {
@@ -45,7 +47,7 @@ export type LoadResult =
   | { ok: false; reason: "no-session" | "inactive" | "error"; message: string };
 
 const BUSINESS_COLUMNS =
-  "id, name, short_name, location, owner_line, phone, whatsapp, logo_url, stamp_url, signature_url, website_url, instagram_url, youtube_url, maps_url, reels_url, active";
+  "id, name, short_name, location, owner_line, phone, whatsapp, logo_url, stamp_url, signature_url, website_url, instagram_url, youtube_url, maps_url, reels_url, active, enabled_pages";
 
 /* ------------------------------------------------------------------ */
 /* Module-level snapshot.                                              */

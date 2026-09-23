@@ -43,6 +43,7 @@ import { lock } from "@/lib/auth/gate";
 import { useSession } from "@/lib/auth/session";
 import { PLATFORM_NAME } from "@/lib/brand";
 import { isMasterAdmin, isSuperAdmin } from "@/lib/auth/access";
+import { isFeatureEnabled, type FeatureKey } from "@/lib/features";
 
 /**
  * `primary: true` marks the items that get a permanent slot in the
@@ -68,6 +69,7 @@ const nav = [
     label: "Rentals",
     icon: Boxes,
     primary: true,
+    feature: "rentals",
   },
   {
     to: "/platform/businesses",
@@ -96,40 +98,47 @@ const nav = [
     icon: HardHat,
     adminOnly: true,
     primary: true,
+    feature: "labour",
   },
   {
     to: "/worker-locations",
     label: "Worker Locations",
     icon: MapPinned,
     adminOnly: true,
+    feature: "worker_locations",
   },
   {
     to: "/diary",
     label: "Diary / Notes",
     icon: NotebookPen,
+    feature: "diary",
   },
   {
     to: "/reports",
     label: "Reports",
     icon: FileBarChart,
+    feature: "reports",
   },
   {
     to: "/receipts",
     label: "Receipts",
     icon: Receipt,
     primary: true,
+    feature: "receipts",
   },
   {
     to: "/reels",
     label: "Reel Management",
     icon: Clapperboard,
     adminOnly: true,
+    feature: "reels",
   },
   {
     to: "/feedback",
     label: "Worker Feedback",
     icon: MessagesSquare,
     adminOnly: true,
+    feature: "feedback",
   },
   {
     to: "/business-settings",
@@ -140,7 +149,7 @@ const nav = [
 ];
 
 function useNavLinks() {
-  const { me } = useSession();
+  const { me, business } = useSession();
   const worker = me?.role === "worker";
 
   let links;
@@ -158,7 +167,14 @@ function useNavLinks() {
     // The platform admin only manages businesses and their users.
     links = nav.filter((item) => item.superOnly);
   } else {
-    links = nav.filter((item) => !item.superOnly && (!item.adminOnly || isMasterAdmin()));
+    // Only show a page if this business has been assigned it (or it isn't a
+    // togglable page at all — Dashboard, Manage Users, Business Settings).
+    links = nav.filter(
+      (item) =>
+        !item.superOnly &&
+        (!item.adminOnly || isMasterAdmin()) &&
+        (!item.feature || isFeatureEnabled(business, item.feature as FeatureKey)),
+    );
   }
 
   return { links, worker };
@@ -284,6 +300,7 @@ function SidebarContent({
   const { business } = useSession();
   const brandName = business?.name ?? PLATFORM_NAME;
   const brandLocation = business?.location ?? "";
+  const locationSharingEnabled = isFeatureEnabled(business, "worker_locations");
 
   const ThemeToggle = (
     <Button
@@ -383,7 +400,7 @@ function SidebarContent({
           <div className="space-y-3 border-t border-sidebar-border p-4">
             {ThemeToggle}
 
-            <WorkerLocationToggle workerId={workerId ?? null} />
+            {locationSharingEnabled && <WorkerLocationToggle workerId={workerId ?? null} />}
 
             <div className="min-w-0 text-sm">
               <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-sidebar-foreground/60">
@@ -438,6 +455,8 @@ function MoreMenuContent({
 }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { links } = useNavLinks();
+  const { business } = useSession();
+  const locationSharingEnabled = isFeatureEnabled(business, "worker_locations");
   const isWorkerSidebar = workerName !== undefined;
   // Everything without a permanent nav slot — those are already one tap away.
   const secondary = links.filter((l) => !l.primary);
@@ -510,7 +529,7 @@ function MoreMenuContent({
             )}
           </div>
 
-          {isWorkerSidebar && <WorkerLocationToggle workerId={workerId ?? null} />}
+          {isWorkerSidebar && locationSharingEnabled && <WorkerLocationToggle workerId={workerId ?? null} />}
 
           {isWorkerSidebar && <ExploreLinks />}
 

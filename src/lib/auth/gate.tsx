@@ -25,6 +25,7 @@ import {
   type Me,
   type SessionState,
 } from "@/lib/auth/session";
+import { featureForPath, isFeatureEnabled } from "@/lib/features";
 
 const EMPTY: SessionState = { me: null, business: null };
 const inputClass =
@@ -181,6 +182,13 @@ export function Gate({ children }: { children: ReactNode }) {
       void navigate({ to: "/platform/businesses" });
     } else if (role !== "super_admin" && role !== "worker" && pathname.startsWith("/platform/")) {
       void navigate({ to: "/dashboard" });
+    } else if (role !== "super_admin" && role !== "worker") {
+      // The platform admin hasn't assigned this page to the business — don't
+      // let a stale link/bookmark reach it, even though the nav already hides it.
+      const feature = featureForPath(pathname);
+      if (feature && !isFeatureEnabled(state.business, feature.key)) {
+        void navigate({ to: "/dashboard" });
+      }
     }
   }, [navigate, pathname, phase, state]);
 
