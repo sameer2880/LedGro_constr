@@ -39,7 +39,6 @@ function PublicReceiptPage() {
   const receipt = groupRentals(rows)[0];
   const receiptNumber = rows.length > 1 ? rows[0].group_id || rows[0].id : rows[0].id;
   const logo = business?.logo_url ?? null;
-  const stamp = business?.stamp_url ?? null;
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4 sm:p-6">
@@ -151,20 +150,6 @@ function PublicReceiptPage() {
               <span>Total</span>
               <span>₹{(Number(receipt.total_amount) - Number(receipt.security_deposit ?? 0)).toLocaleString("en-IN")}</span>
             </div>
-          </div>
-        </div>
-
-        {/* Signature */}
-        <div className="mb-10 flex justify-end">
-          <div className="relative w-52 pt-14 text-center">
-            {stamp && (
-              <img
-                src={stamp}
-                alt={`${business?.name ?? ""} official stamp`}
-                className="pointer-events-none absolute left-1/2 top-0 z-10 h-24 w-24 -translate-x-1/2 -rotate-6 opacity-90 grayscale print:opacity-90"
-              />
-            )}
-            <div className="border-t border-gray-300 pt-1 text-xs font-medium text-gray-500">Authorized Signature</div>
           </div>
         </div>
 
