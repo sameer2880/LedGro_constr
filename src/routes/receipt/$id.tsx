@@ -41,8 +41,12 @@ function PublicReceiptPage() {
   const logo = business?.logo_url ?? null;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 p-4 sm:p-6">
-      <article className="receipt-sheet mx-auto max-w-3xl rounded-2xl border border-gray-200 bg-white p-6 text-gray-700 shadow-sm sm:p-10 print:rounded-none print:border-0 print:shadow-none">
+    <div className="min-h-screen bg-gray-200 py-6 px-3 sm:py-10 sm:px-6 print:min-h-0 print:bg-white print:p-0">
+      <style>{`@page { size: A4; margin: 0; }`}</style>
+      <article
+        className="receipt-sheet mx-auto w-full max-w-[210mm] bg-white p-6 text-gray-700 shadow-xl sm:p-[15mm] print:max-w-none print:p-[15mm] print:shadow-none"
+        style={{ minHeight: "297mm" }}
+      >
         {/* Title + From */}
         <div className="mb-8 flex items-start justify-between gap-6">
           <div>
