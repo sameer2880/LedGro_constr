@@ -1,18 +1,8 @@
 import { useEffect, useState } from "react";
-import { PLATFORM_NAME } from "@/lib/brand";
+import { PLATFORM_NAME, PLATFORM_TAGLINE } from "@/lib/brand";
 import { Link } from "@tanstack/react-router";
-import {
-  ArrowDown,
-  Home,
-  Moon,
-  Receipt,
-  ShieldCheck,
-  Sun,
-  Truck,
-  Users,
-} from "lucide-react";
+import { Download, Home, Moon, Receipt, ShieldCheck, Sun, Truck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { BrandLogo } from "@/components/BrandLogo";
 import { BrandName } from "@/components/BrandName";
@@ -82,8 +72,8 @@ function DesktopIcon({ className }: IconProps) {
   );
 }
 
-/* "Your device" dot: pop-in, two ripple rings and a breathing glow,
-   same feel as the animated brand logo. Uses the app's theme colours. */
+/* "Your device" dot: pop-in, two ripple rings and a breathing glow —
+   the same treatment the animated brand logo uses. */
 const LIVE_DOT_CSS = `
 .live-dot {
   display: inline-flex;
@@ -131,245 +121,196 @@ const LIVE_DOT_CSS = `
 `;
 
 export function AppLanding() {
-  const [device, setDevice] = useState<Device>("desktop");
+  const [detected, setDetected] = useState<Device>("desktop");
+  const [pick, setPick] = useState<Device>("desktop");
   const { dark, toggleTheme } = useTheme();
 
   useEffect(() => {
-    setDevice(detectDevice());
+    const d = detectDevice();
+    setDetected(d);
+    setPick(d);
   }, []);
 
-  const scrollToDevices = () => {
-    document.getElementById("pick-device")?.scrollIntoView({ behavior: "smooth" });
-  };
-
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="flex min-h-dvh flex-col bg-background lg:flex-row">
       <style>{LIVE_DOT_CSS}</style>
-      {/* Header — logo + name on the left, theme toggle on the right */}
-      <header className="border-b border-border">
-        <div className="mx-auto flex h-16 max-w-[1336px] items-center justify-between gap-3 px-5">
-          <div className="flex min-w-0 items-center gap-3">
+
+      {/* Illustration panel — full height, only visible from lg */}
+      <div className="relative hidden overflow-hidden bg-gradient-to-br from-[#7ab558] via-primary to-[#22331c] lg:flex lg:w-1/2 lg:items-center lg:justify-center">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-16 -top-16 h-64 w-64 rounded-full bg-white/15 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-24 -right-10 h-72 w-72 rounded-full bg-black/20 blur-3xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute right-10 top-10 h-24 w-24 rounded-full bg-[#c8e896]/25 blur-2xl"
+        />
+
+        <div className="relative z-10 flex w-full flex-col items-center gap-10 px-10 xl:px-16">
+          <div className="w-full max-w-[520px] xl:max-w-[620px]">
+            <DevicesIllustration className="h-auto w-full drop-shadow-2xl" />
+          </div>
+          <div className="text-center text-white/90">
+            <p className="text-lg font-semibold">One app, every device.</p>
+            <p className="mt-1 text-sm text-white/60">{PLATFORM_TAGLINE}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Content panel — the only panel on mobile and tablet */}
+      <div className="relative flex w-full flex-1 flex-col justify-center px-6 py-16 sm:px-10 lg:w-1/2 lg:px-14">
+        {/* Theme toggle — pinned to the top-right corner, circular border */}
+        <button
+          onClick={toggleTheme}
+          aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
+          className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background text-foreground shadow-sm transition-colors hover:bg-accent/10 sm:right-6 sm:top-6"
+        >
+          {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
+        </button>
+
+        <div className="mx-auto flex w-full max-w-[440px] flex-col">
+          <div className="flex items-center gap-2.5">
             <BrandLogo className="h-9 w-9 shrink-0" alt={PLATFORM_NAME} />
             <BrandName className="truncate text-lg font-bold tracking-tight" />
           </div>
-          <button
-            onClick={toggleTheme}
-            aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-accent/10"
-          >
-            {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
-          </button>
-        </div>
-      </header>
 
-      {/* Hero */}
-      <section className="flex flex-col items-center px-5 pb-20 pt-12 text-center sm:pt-16">
-        <span className="inline-flex items-center gap-2 rounded-full border border-warning/40 bg-warning/10 px-4 py-1.5 text-xs font-semibold tracking-wide text-warning">
-          <span className="size-1.5 rounded-full bg-warning" />
-          SITE &amp; LABOUR MANAGEMENT
-        </span>
-
-        <h1 className="mt-6 max-w-3xl text-4xl font-extrabold leading-[1.1] sm:text-6xl">
-          Labour, Rentals &amp; Receipts,
-          <br />
-          All In <span className="text-primary">One App</span>
-        </h1>
-
-        <p className="mt-5 max-w-xl text-balance text-muted-foreground sm:text-lg">
-          Track workers, rentals and daily site records from your phone or computer — synced
-          instantly for your whole team.
-        </p>
-
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
-          {[
-            { icon: Users, label: "Labour tracking" },
-            { icon: Truck, label: "Rentals" },
-            { icon: Receipt, label: "Receipts" },
-            { icon: ShieldCheck, label: "Secure login" },
-          ].map(({ icon: Icon, label }) => (
-            <span
-              key={label}
-              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-xs font-medium text-muted-foreground"
-            >
-              <Icon className="size-3.5 text-primary" />
-              {label}
-            </span>
-          ))}
-        </div>
-
-        <Button asChild size="lg" className="mt-9 h-12 gap-2 px-8 text-base">
-          <Link to="/dashboard">
-            <Home className="size-5" />
-            GO TO DASHBOARD
-          </Link>
-        </Button>
-
-        <p className="mt-4 text-sm text-muted-foreground">
-          You'll be asked to sign in with your account.
-        </p>
-
-        <button
-          onClick={scrollToDevices}
-          className="mt-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
-        >
-          See install steps for every device
-          <ArrowDown className="size-3.5" />
-        </button>
-      </section>
-
-      {/* Device picker */}
-      <section id="pick-device" className="px-5 pb-20 pt-4">
-        <div className="mx-auto max-w-5xl text-center">
-          <span className="text-xs font-semibold uppercase tracking-wide text-primary">
-            Get the app
-          </span>
-          <h2 className="mt-2 text-3xl font-bold sm:text-4xl">
-            Pick your device
-          </h2>
-          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            Android, iPhone or computer — choose yours and follow the steps below.
-          </p>
-
-          <div className="mt-8 grid gap-4 text-left sm:grid-cols-3">
-            <DeviceCard
-              icon={AndroidIcon}
-              title="Android"
-              subtitle="Phone & tablet"
-              tag="FREE APK"
-              isYourDevice={device === "android"}
-              href={APK_URL}
-              download
-            />
-            <DeviceCard
-              icon={AppleIcon}
-              title="iOS"
-              subtitle="iPhone & iPad"
-              tag="INSTALL GUIDE"
-              isYourDevice={device === "ios"}
-              to="/dashboard"
-            />
-            <DeviceCard
-              icon={DesktopIcon}
-              title="Computer"
-              subtitle="Windows, Mac & Linux"
-              tag="WEB — NO INSTALL"
-              isYourDevice={device === "desktop"}
-              to="/dashboard"
-            />
+          {/* Illustration — mobile/tablet only, fills the content width */}
+          <div className="mx-auto mt-6 w-full max-w-[340px] lg:hidden">
+            <DevicesIllustration className="h-auto w-full drop-shadow-xl" />
           </div>
-        </div>
 
-        {/* Bottom CTA panel */}
-        <Card className="mx-auto mt-14 grid max-w-4xl gap-8 p-6 sm:grid-cols-2 sm:items-center sm:p-10">
-          <div>
-            <h3 className="text-xl font-bold leading-snug sm:text-2xl">
-              Already installed the app?
-              <br />
-              Keep using the browser any time.
-            </h3>
-            <p className="mt-2 text-sm text-warning">
-              Use Chrome, Safari or Firefox for the best experience.
-            </p>
-            <Button asChild size="lg" className="mt-5 gap-2">
-              <Link to="/dashboard">
-                <Home className="size-4" />
-                GO TO DASHBOARD
-              </Link>
-            </Button>
-            <div className="mt-5 flex items-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
-              <ShieldCheck className="size-4 shrink-0 text-primary" />
-              Your login works the same on the app and the website.
+          <h1 className="mt-5 text-center text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl lg:text-left">
+            Welcome to <BrandName />
+          </h1>
+          <p className="mt-2 text-center text-sm text-muted-foreground lg:text-left">{PLATFORM_TAGLINE}</p>
+
+          <div className="mt-4 flex flex-wrap justify-center gap-1.5 lg:justify-start">
+            {[
+              { icon: Users, label: "Labour tracking" },
+              { icon: Truck, label: "Rentals" },
+              { icon: Receipt, label: "Receipts" },
+            ].map(({ icon: Icon, label }) => (
+              <span
+                key={label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-[11px] font-medium text-muted-foreground"
+              >
+                <Icon className="size-3 text-primary" />
+                {label}
+              </span>
+            ))}
+          </div>
+
+          <Button
+            asChild
+            className="mt-6 h-12 w-full gap-2 rounded-full text-sm font-semibold shadow-md shadow-primary/20 transition-transform active:scale-[0.99]"
+          >
+            <Link to="/dashboard">
+              <Home className="size-4" />
+              Go to dashboard
+            </Link>
+          </Button>
+
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-xs text-muted-foreground">
+            <ShieldCheck className="size-4 shrink-0 text-primary" />
+            You'll be asked to sign in with your account.
+          </div>
+
+          {/* Get the app */}
+          <div className="mt-8">
+            <p className="text-xs font-semibold uppercase tracking-wide text-primary">Get the app</p>
+
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {(
+                [
+                  { value: "android", label: "Android", icon: AndroidIcon },
+                  { value: "ios", label: "iOS", icon: AppleIcon },
+                  { value: "desktop", label: "Computer", icon: DesktopIcon },
+                ] as const
+              ).map(({ value, label, icon: Icon }) => {
+                const active = pick === value;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setPick(value)}
+                    className={cn(
+                      "relative flex flex-col items-center gap-1.5 rounded-2xl border px-2 py-3 text-xs font-medium transition-all duration-200",
+                      active
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                    )}
+                  >
+                    {detected === value && (
+                      <span className="live-dot absolute right-2 top-2" aria-hidden="true">
+                        <span className="live-dot-ring" />
+                        <span className="live-dot-ring live-dot-ring-2" />
+                        <span className="live-dot-core" />
+                      </span>
+                    )}
+                    <Icon className="size-5" />
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-3 rounded-2xl border border-border p-4">
+              {pick === "android" && (
+                <>
+                  <p className="text-sm font-medium">Phone &amp; tablet</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Download the free APK and install it directly — no Play Store needed.
+                  </p>
+                  <Button asChild variant="outline" className="mt-3 w-full gap-2 rounded-full">
+                    <a href={APK_URL} download>
+                      <Download className="size-4" />
+                      Download APK
+                    </a>
+                  </Button>
+                </>
+              )}
+              {pick === "ios" && (
+                <>
+                  <p className="text-sm font-medium">iPhone &amp; iPad</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    There's no App Store app yet — use the dashboard in Safari, then add it to your Home
+                    Screen for the full-screen app feel.
+                  </p>
+                  <Button asChild variant="outline" className="mt-3 w-full gap-2 rounded-full">
+                    <Link to="/dashboard">
+                      <Home className="size-4" />
+                      Open in Safari
+                    </Link>
+                  </Button>
+                </>
+              )}
+              {pick === "desktop" && (
+                <>
+                  <p className="text-sm font-medium">Windows, Mac &amp; Linux</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    No install needed — use Chrome, Safari or Firefox for the best experience.
+                  </p>
+                  <Button asChild variant="outline" className="mt-3 w-full gap-2 rounded-full">
+                    <Link to="/dashboard">
+                      <Home className="size-4" />
+                      Open the dashboard
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
-          <DevicesIllustration />
-        </Card>
 
-        <p className="mt-6 text-center text-[11px] text-muted-foreground/70">
-          Android app version {APP_VERSION} · {ANDROID_PACKAGE}
-        </p>
-      </section>
-    </div>
-  );
-}
-
-function DeviceCard({
-  icon: Icon,
-  title,
-  subtitle,
-  tag,
-  isYourDevice,
-  href,
-  to,
-  download,
-}: {
-  icon: (props: IconProps) => React.ReactElement;
-  title: string;
-  subtitle: string;
-  tag: string;
-  isYourDevice: boolean;
-  href?: string;
-  to?: string;
-  download?: boolean;
-}) {
-  const content = (
-    <>
-      {isYourDevice && (
-        <>
-          <span className="absolute -top-2.5 right-5 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-primary-foreground">
-            Your device
-          </span>
-          <span className="live-dot absolute right-6 top-5" aria-hidden="true">
-            <span className="live-dot-ring" />
-            <span className="live-dot-ring live-dot-ring-2" />
-            <span className="live-dot-core" />
-          </span>
-        </>
-      )}
-
-      <div className="flex items-center gap-3">
-        <Icon
-          className={cn(
-            "size-6 shrink-0",
-            isYourDevice ? "text-primary" : "text-secondary-foreground",
-          )}
-        />
-        <span className="text-base font-semibold uppercase tracking-wide">{title}</span>
+          <p className="mt-6 text-center text-[11px] text-muted-foreground/70 lg:text-left">
+            Android app version {APP_VERSION} · {ANDROID_PACKAGE}
+          </p>
+        </div>
       </div>
-
-      <span className="mt-2 text-xs text-muted-foreground">{subtitle}</span>
-
-      <span
-        className={cn(
-          "mt-4 rounded-full border px-3 py-1 text-[11px] font-medium uppercase tracking-wide",
-          isYourDevice
-            ? "border-primary/40 bg-primary/10 text-primary"
-            : "border-border text-muted-foreground",
-        )}
-      >
-        {tag}
-      </span>
-    </>
-  );
-
-  const className = cn(
-    "relative flex flex-col items-start rounded-3xl px-5 pb-5 pt-7 transition-all duration-200 hover:-translate-y-0.5",
-    isYourDevice
-      ? "border-2 border-primary/60 bg-gradient-to-b from-primary/15 to-primary/5 shadow-[0_12px_40px_-14px] shadow-primary/40"
-      : "border border-border bg-gradient-to-b from-card to-muted hover:shadow-lg",
-  );
-
-  if (href) {
-    return (
-      <a href={href} download={download} className={className}>
-        {content}
-      </a>
-    );
-  }
-
-  return (
-    <Link to={to ?? "/"} className={className}>
-      {content}
-    </Link>
+    </div>
   );
 }
 
@@ -378,7 +319,7 @@ function DeviceCard({
  * Colours are the app's own dark-theme palette (forest green + lime), so it
  * looks the same in light and dark mode, like a "media" panel.
  */
-function DevicesIllustration() {
+function DevicesIllustration({ className }: { className?: string }) {
   const LIME = "#a8d977"; // --primary (dark theme)
   const LIME_SOFT = "#c8e896"; // --accent (dark theme)
   const MINT = "#7dcb92"; // --success (dark theme)
@@ -390,7 +331,7 @@ function DevicesIllustration() {
       viewBox="0 0 548 357"
       role="img"
       aria-label={`${PLATFORM_NAME} on laptop, tablet and phone`}
-      className="mx-auto h-auto w-full max-w-[440px] drop-shadow-xl"
+      className={className}
     >
       <defs>
         <linearGradient id="dev-panel" x1="0" y1="0" x2="0" y2="1">
