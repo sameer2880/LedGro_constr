@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Outlet, createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { ConfirmDialogHost } from "@/components/ui/confirm-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { PLATFORM_NAME, PLATFORM_TAGLINE } from "@/lib/brand";
 import { syncNativeStatusBar } from "@/lib/native-status-bar";
@@ -245,6 +246,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <Outlet />
       <Toaster richColors position="top-right" />
+      <ConfirmDialogHost />
     </QueryClientProvider>
   );
 }

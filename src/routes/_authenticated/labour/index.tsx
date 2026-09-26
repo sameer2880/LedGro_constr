@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { downloadCsv } from "@/lib/export";
 import { toast } from "sonner";
+import { confirm } from "@/components/ui/confirm-dialog";
 import type { UserRole } from "@/lib/auth/roles";
 import { PLATFORM_NAME } from "@/lib/brand";
 import { AdminOnly } from "@/components/AdminOnly";
@@ -211,7 +212,7 @@ function MarkAttendanceDialog({
   const holidayAll = isHolidayForAll(selectedDate);
   const busy = save.isPending || clear.isPending;
 
-  const toggleHoliday = () => {
+  const toggleHoliday = async () => {
     if (workers.length === 0) return;
     if (holidayAll) {
       clear.mutate(
@@ -226,9 +227,9 @@ function MarkAttendanceDialog({
     }).length;
     if (
       alreadyMarked > 0 &&
-      !window.confirm(
+      !(await confirm(
         `${alreadyMarked} worker(s) already have present/absent marked on this date. Mark it as a holiday for everyone and replace those?`,
-      )
+      ))
     ) {
       return;
     }
@@ -247,10 +248,18 @@ function MarkAttendanceDialog({
     );
   };
 
-  const clearAllAttendance = () => {
+  const clearAllAttendance = async () => {
     const targets = workers.filter((w) => dayMap?.get(w.id));
     if (targets.length === 0) return toast.info("Nothing to clear for this date");
-    if (!window.confirm(`Clear attendance for ${targets.length} worker(s) on this date?`)) return;
+    if (
+      !(await confirm({
+        description: `Clear attendance for ${targets.length} worker(s) on this date?`,
+        confirmText: "Clear attendance",
+        variant: "destructive",
+      }))
+    ) {
+      return;
+    }
     clear.mutate(
       { workerIds: targets.map((w) => w.id) },
       { onSuccess: () => toast.success("Attendance cleared for this date") },
