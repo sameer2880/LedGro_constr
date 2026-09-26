@@ -4,12 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import { listRentals, type Rental } from "@/lib/rentals";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@/lib/auth/session";
+import { isFeatureEnabled } from "@/lib/features";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge } from "@/components/StatusBadge";
 import { useDeviceType } from "@/hooks/use-device";
-import { ArrowUpRight, CalendarDays, Plus, Wallet, TrendingUp } from "lucide-react";
+import {
+  ArrowUpRight, CalendarDays, Plus, Wallet, TrendingUp, CalendarCheck,
+} from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell, LabelList, AreaChart, Area, Tooltip,
 } from "recharts";
@@ -17,6 +20,18 @@ import {
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
 });
+
+/**
+ * Which dashboard a business sees depends on whether the platform admin has
+ * turned on the "rentals" page for them (see lib/features.ts):
+ *  - rentals enabled  -> the original rentals-focused dashboard, unchanged.
+ *  - rentals disabled -> a workers/attendance-focused dashboard instead,
+ *    since that's all a labour-only business has to look at.
+ */
+function Dashboard() {
+  const { business } = useSession();
+  return isFeatureEnabled(business, "rentals") ? <RentalsDashboard /> : <WorkerDashboard />;
+}
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -94,7 +109,9 @@ function CardBody({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
 /* Small building blocks                                               */
 /* ------------------------------------------------------------------ */
 
-function ArrowLink({ to, label }: { to: "/rentals" | "/reports"; label: string }) {
+function ArrowLink({
+  to, label,
+}: { to: "/rentals" | "/reports" | "/labour" | "/manage-worker"; label: string }) {
   return (
     <Link
       to={to}
@@ -108,7 +125,12 @@ function ArrowLink({ to, label }: { to: "/rentals" | "/reports"; label: string }
 
 function CardTop({
   title, subtitle, to, linkLabel,
-}: { title: string; subtitle: string; to: "/rentals" | "/reports"; linkLabel: string }) {
+}: {
+  title: string;
+  subtitle: string;
+  to: "/rentals" | "/reports" | "/labour" | "/manage-worker";
+  linkLabel: string;
+}) {
   return (
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
@@ -159,7 +181,7 @@ function Money({ value, className }: { value: number; className?: string }) {
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
-function Dashboard() {
+function RentalsDashboard() {
   const { data: rentals = [], isLoading } = useQuery({ queryKey: ["rentals"], queryFn: listRentals });
   const device = useDeviceType();
   const isMobile = device === "mobile";
@@ -664,6 +686,509 @@ function Dashboard() {
                             )}
                           >
                             {r.payment_status === "paid" ? "Paid" : "Not paid"}
+                          </p>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardBody>
+        </Card>
+      </div>
+    </div>
+  );
+}
+/* ------------------------------------------------------------------ */
+/* Worker / attendance dashboard (shown when a business has no        */
+/* Rentals page — see the top-level Dashboard component above)        */
+/* ------------------------------------------------------------------ */
+
+type WorkerRow = {
+  id: string;
+  name: string;
+  phone: string | null;
+  daily_wage: number;
+  active: boolean;
+};
+
+type AttendanceStatus = "present" | "absent" | "holiday";
+type AttendanceDayType = "full" | "half" | "ot";
+type AttendanceRow = {
+  worker_id: string;
+  work_date: string;
+  status: AttendanceStatus;
+  day_type: AttendanceDayType;
+};
+
+/** A present day pays this multiple of the worker's daily wage. */
+const DAY_MULTIPLIER: Record<AttendanceDayType, number> = { full: 1, half: 0.5, ot: 1.5 };
+
+async function listWorkers(): Promise<WorkerRow[]> {
+  const { data, error } = await supabase
+    .from("workers")
+    .select("id, name, phone, daily_wage, active")
+    .eq("role", "worker")
+    .order("name");
+  if (error) throw error;
+  return (data ?? []) as unknown as WorkerRow[];
+}
+
+/** Every attendance row between two dates (inclusive), paging past the 1000-row API limit. */
+async function fetchAttendanceRange(start: string, end: string): Promise<AttendanceRow[]> {
+  const PAGE = 1000;
+  const rows: AttendanceRow[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from("worker_attendance")
+      .select("worker_id, work_date, status, day_type")
+      .gte("work_date", start)
+      .lte("work_date", end)
+      .range(from, from + PAGE - 1);
+    if (error) throw error;
+    rows.push(...((data ?? []) as unknown as AttendanceRow[]));
+    if (!data || data.length < PAGE) break;
+  }
+  return rows;
+}
+
+function AttendanceBadge({ status }: { status: AttendanceStatus | "unmarked" }) {
+  const map = {
+    present: "bg-success/10 text-success border-success/40",
+    absent: "bg-destructive/10 text-destructive border-destructive/40",
+    holiday: "bg-warning/15 text-warning border-warning/40",
+    unmarked: "bg-muted text-muted-foreground border-border",
+  } as const;
+  const label = status === "unmarked" ? "Not marked" : status;
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold capitalize",
+        map[status],
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
+function WorkerDashboard() {
+  const device = useDeviceType();
+  const isMobile = device === "mobile";
+
+  const { me, business } = useSession();
+  const firstName = me?.role === "super_admin" ? "Admin" : (me?.name ?? "").trim().split(/\s+/)[0];
+  const businessTitle = business ? (business.location ? `${business.name}, ${business.location}` : business.name) : "";
+
+  const { data: workers = [], isLoading: workersLoading } = useQuery({
+    queryKey: ["dashboard_workers"],
+    queryFn: listWorkers,
+  });
+
+  const now = new Date();
+  const today = now.toLocaleDateString("en-CA"); // local YYYY-MM-DD
+  const rangeStart = (() => {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - 5);
+    return d.toLocaleDateString("en-CA");
+  })();
+
+  const { data: attendance = [], isLoading: attendanceLoading } = useQuery({
+    queryKey: ["dashboard_attendance", rangeStart, today],
+    queryFn: () => fetchAttendanceRange(rangeStart, today),
+  });
+
+  const isLoading = workersLoading || attendanceLoading;
+  const [hovered, setHovered] = useState<number | null>(null);
+
+  const workerIds = new Set(workers.map((w) => w.id));
+  const wageByWorker = new Map(workers.map((w) => [w.id, Number(w.daily_wage || 0)]));
+  const activeWorkers = workers.filter((w) => w.active);
+
+  const todayRows = attendance.filter((r) => r.work_date === today && workerIds.has(r.worker_id));
+  const todayStatusByWorker = new Map(todayRows.map((r) => [r.worker_id, r.status]));
+  const presentToday = todayRows.filter((r) => r.status === "present").length;
+  const absentToday = todayRows.filter((r) => r.status === "absent").length;
+  const holidayToday = todayRows.filter((r) => r.status === "holiday").length;
+  const unmarkedToday = Math.max(workers.length - todayRows.length, 0);
+
+  // last 6 months of present-days & estimated payroll
+  const monthly = Array.from({ length: 6 }).map((_, i) => {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - (5 - i));
+    const y = d.getFullYear();
+    const m = d.getMonth();
+    const rows = attendance.filter((r) => {
+      if (!workerIds.has(r.worker_id)) return false;
+      const rd = new Date(`${r.work_date}T00:00:00`);
+      return rd.getFullYear() === y && rd.getMonth() === m;
+    });
+    const presentRows = rows.filter((r) => r.status === "present");
+    const payroll = presentRows.reduce(
+      (s, r) => s + (wageByWorker.get(r.worker_id) ?? 0) * DAY_MULTIPLIER[r.day_type],
+      0,
+    );
+    return { label: d.toLocaleString("en", { month: "short" }), present: presentRows.length, payroll };
+  });
+
+  const thisMonthPresent = monthly[5].present;
+  const thisMonthPayroll = monthly[5].payroll;
+
+  const attendanceCounts = monthly.map((m) => m.present);
+  const peak = Math.max(...attendanceCounts);
+  const peakIdx = peak > 0 ? attendanceCounts.indexOf(peak) : monthly.length - 1;
+  const activeIdx = hovered ?? peakIdx;
+
+  const barChartHeight = isMobile ? 230 : device === "tablet" ? 260 : 290;
+
+  const sortedWorkers = [...workers].sort((a, b) => {
+    const rank = (s?: AttendanceStatus) => (s === "present" ? 0 : s === "absent" ? 1 : s === "holiday" ? 2 : 3);
+    return (
+      rank(todayStatusByWorker.get(a.id)) - rank(todayStatusByWorker.get(b.id)) || a.name.localeCompare(b.name)
+    );
+  });
+  const shownWorkers = sortedWorkers.slice(0, 8);
+
+  return (
+    <div className="space-y-6">
+      {/* ---------- Header ---------- */}
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-fluid-3xl font-semibold tracking-tight">
+            Welcome Back{firstName && ","}{" "}
+            <span className="font-normal text-muted-foreground">{firstName}</span>
+          </h2>
+          <p className="text-fluid-sm text-muted-foreground">
+            Workforce & attendance overview at {businessTitle}
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="inline-flex h-10 items-center gap-2 rounded-full border border-border/80 bg-card px-4 text-sm shadow-sm">
+            <CalendarDays className="h-4 w-4 text-muted-foreground" />
+            {now.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+          </div>
+          <Link
+            to="/labour"
+            className="inline-flex h-10 items-center gap-2 rounded-full border border-border/80 bg-card px-4 text-sm font-medium shadow-sm transition-colors hover:bg-primary hover:text-primary-foreground"
+          >
+            <CalendarCheck className="h-4 w-4" />
+            Mark Attendance
+          </Link>
+        </div>
+      </div>
+
+      {/* ---------- Main grid ---------- */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.55fr)_minmax(0,1fr)]">
+        {/* Left column: worker count + this month */}
+        <div className="flex min-w-0 flex-col gap-4 lg:col-start-1 lg:row-start-1">
+          <Card>
+            <CardBody className="space-y-4">
+              <CardTop
+                title="Total Workers"
+                subtitle="Everyone on the books"
+                to="/manage-worker"
+                linkLabel="Manage workers"
+              />
+              <div className="relative overflow-hidden rounded-2xl bg-primary p-5 text-primary-foreground">
+                <div className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-primary-foreground/10" />
+                <div className="pointer-events-none absolute -bottom-12 right-10 h-28 w-28 rounded-full bg-primary-foreground/10" />
+                <div className="relative flex items-center justify-between">
+                  <span className="text-lg font-extrabold tracking-wider">
+                    {business?.short_name ?? business?.name?.slice(0, 4) ?? ""}
+                  </span>
+                  <span className="text-[11px] opacity-80">Workers</span>
+                </div>
+                <p className="relative mt-5 text-2xl font-bold xl:text-3xl">{workers.length}</p>
+                <div className="relative mt-5 flex items-center justify-between text-[11px] opacity-80">
+                  <span>{activeWorkers.length} active</span>
+                  <span>{business?.location ?? ""}</span>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+
+          <Card className="lg:flex lg:flex-1 lg:flex-col">
+            <CardBody className="lg:flex lg:flex-1 lg:flex-col lg:justify-center">
+              <p className="text-fluid-xs text-muted-foreground">This Month</p>
+              <p className="mt-1 min-w-0 truncate text-fluid-xl font-semibold">
+                {thisMonthPresent} present-{thisMonthPresent === 1 ? "day" : "days"}
+              </p>
+            </CardBody>
+          </Card>
+        </div>
+
+        {/* Center: attendance bar chart */}
+        <Card className="min-w-0 lg:col-start-2 lg:row-start-1">
+          <CardBody>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted">
+                  <TrendingUp className="h-4 w-4" />
+                </div>
+                <p className="text-fluid-sm font-semibold">Attendance</p>
+              </div>
+              <ArrowLink to="/labour" label="Open labour charges" />
+            </div>
+
+            <div className="mt-4" style={{ height: barChartHeight }}>
+              <ResponsiveContainer>
+                <BarChart
+                  data={monthly}
+                  margin={{ top: 34, right: 4, left: isMobile ? -18 : 0, bottom: 0 }}
+                  barCategoryGap="18%"
+                >
+                  <defs>
+                    <pattern id="attHatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                      <rect width="6" height="6" fill="var(--chart-1)" fillOpacity={0.3} />
+                      <line x1="0" y1="0" x2="0" y2="6" stroke="var(--chart-1)" strokeOpacity={0.5} strokeWidth={2} />
+                    </pattern>
+                  </defs>
+                  <CartesianGrid vertical={false} strokeDasharray="4 4" opacity={0.4} />
+                  <XAxis
+                    dataKey="label"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: isMobile ? 10 : 12, fill: "var(--muted-foreground)" }}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    width={isMobile ? 34 : 42}
+                    tickFormatter={(v: number) => compact(v)}
+                    tick={{ fontSize: isMobile ? 10 : 12, fill: "var(--muted-foreground)" }}
+                  />
+                  <Bar
+                    dataKey="present"
+                    radius={999}
+                    maxBarSize={48}
+                    onMouseEnter={(_: any, i: number) => setHovered(i)}
+                    onMouseLeave={() => setHovered(null)}
+                    onClick={(_: any, i: number) => setHovered(i)}
+                  >
+                    {monthly.map((_, i) => (
+                      <Cell key={i} fill={i === activeIdx ? "var(--chart-1)" : "url(#attHatch)"} />
+                    ))}
+                    <LabelList
+                      dataKey="present"
+                      content={(p: any) => {
+                        if (p.index !== activeIdx) return null;
+                        const text = `${compact(Number(p.value))} days`;
+                        const w = text.length * 7 + 18;
+                        const cx = p.x + p.width / 2;
+                        return (
+                          <g>
+                            <rect x={cx - w / 2} y={p.y - 30} width={w} height={20} rx={10} fill="var(--chart-1)" />
+                            <text
+                              x={cx}
+                              y={p.y - 16}
+                              textAnchor="middle"
+                              fontSize={11}
+                              fontWeight={600}
+                              fill="var(--primary-foreground)"
+                            >
+                              {text}
+                            </text>
+                          </g>
+                        );
+                      }}
+                    />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardBody>
+        </Card>
+
+        {/* Right column: today's snapshot / payroll / active workers */}
+        <div className="grid min-w-0 gap-4 md:col-span-2 md:grid-cols-2 lg:contents">
+          <Card className="flex min-w-0 flex-col lg:col-start-3 lg:row-start-1">
+            <CardBody className="flex flex-1 flex-col gap-3">
+              <CardTop
+                title="Today's Attendance"
+                subtitle={now.toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+                to="/labour"
+                linkLabel="Open labour charges"
+              />
+              <div className="grid grid-cols-4 gap-1 text-center">
+                {[
+                  { label: "Present", value: presentToday, tone: "text-success" },
+                  { label: "Absent", value: absentToday, tone: "text-destructive" },
+                  { label: "Holiday", value: holidayToday, tone: "text-warning" },
+                  { label: "Unmarked", value: unmarkedToday, tone: "text-muted-foreground" },
+                ].map((s) => (
+                  <div key={s.label}>
+                    <p className={cn("text-fluid-lg font-semibold", s.tone)}>{s.value}</p>
+                    <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </CardBody>
+          </Card>
+
+          <Card className="min-w-0 lg:col-start-3 lg:row-start-2">
+            <CardBody className="space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted">
+                    <Wallet className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-fluid-sm font-semibold leading-tight">Payroll This Month</p>
+                    <p className="text-fluid-xs text-muted-foreground">Estimated from attendance</p>
+                  </div>
+                </div>
+                <ArrowLink to="/labour" label="Open labour charges" />
+              </div>
+              <Money value={thisMonthPayroll} className="text-fluid-2xl font-semibold" />
+            </CardBody>
+          </Card>
+
+          <Card className="min-w-0 md:col-span-2 lg:col-span-1 lg:col-start-3 lg:row-start-3">
+            <CardBody className="space-y-3">
+              <CardTop title="Active Workers" subtitle="On active duty" to="/manage-worker" linkLabel="Manage workers" />
+              <div className="rounded-2xl bg-muted/70 p-3">
+                {activeWorkers.length === 0 ? (
+                  <p className="py-2 text-center text-fluid-xs text-muted-foreground">No active workers yet.</p>
+                ) : (
+                  <div className="flex items-center -space-x-2">
+                    {activeWorkers.slice(0, 4).map((w) => (
+                      <div
+                        key={w.id}
+                        title={w.name}
+                        className={cn(
+                          "flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold ring-2 ring-card",
+                          avatarTone(w.name),
+                        )}
+                      >
+                        {initials(w.name)}
+                      </div>
+                    ))}
+                    {activeWorkers.length > 4 && (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground ring-2 ring-card">
+                        +{activeWorkers.length - 4}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-1 text-center">
+                <div>
+                  <p className="text-fluid-lg font-semibold text-success">{activeWorkers.length}</p>
+                  <p className="text-[10px] text-muted-foreground">Active</p>
+                </div>
+                <div>
+                  <p className="text-fluid-lg font-semibold text-muted-foreground">
+                    {workers.length - activeWorkers.length}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">Inactive</p>
+                </div>
+              </div>
+            </CardBody>
+          </Card>
+        </div>
+
+        {/* Bottom: worker list */}
+        <Card className="min-w-0 md:col-span-2 lg:col-span-2 lg:col-start-1 lg:row-span-2 lg:row-start-2">
+          <CardBody>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-fluid-sm font-semibold leading-tight">Workers</p>
+                <p className="text-fluid-xs text-muted-foreground">Today's status</p>
+              </div>
+              <ArrowLink to="/manage-worker" label="Manage workers" />
+            </div>
+
+            {isMobile ? (
+              <div className="mt-3 space-y-3">
+                {isLoading && <p className="py-6 text-center text-sm text-muted-foreground">Loading…</p>}
+                {!isLoading && shownWorkers.length === 0 && (
+                  <p className="py-6 text-center text-sm text-muted-foreground">
+                    No workers yet. Add your first one from Manage Workers.
+                  </p>
+                )}
+                {shownWorkers.map((w) => (
+                  <div key={w.id} className="rounded-xl border border-border/80 bg-background/40 p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <div
+                          className={cn(
+                            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                            avatarTone(w.name),
+                          )}
+                        >
+                          {initials(w.name)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold">{w.name}</p>
+                          <p className="text-fluid-xs text-muted-foreground">{w.phone ?? "—"}</p>
+                        </div>
+                      </div>
+                      <AttendanceBadge status={todayStatusByWorker.get(w.id) ?? "unmarked"} />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-fluid-sm">
+                      <span className="text-muted-foreground">
+                        ₹{Number(w.daily_wage).toLocaleString("en-IN")}/day
+                      </span>
+                      <span className={w.active ? "text-success" : "text-muted-foreground"}>
+                        {w.active ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-2 overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-b-0 hover:bg-transparent">
+                      <TableHead className="text-xs font-normal text-muted-foreground">Name</TableHead>
+                      <TableHead className="text-xs font-normal text-muted-foreground">Phone</TableHead>
+                      <TableHead className="text-xs font-normal text-muted-foreground">Status</TableHead>
+                      <TableHead className="text-right text-xs font-normal text-muted-foreground">Daily Wage</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">Loading…</TableCell>
+                      </TableRow>
+                    )}
+                    {!isLoading && shownWorkers.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
+                          No workers yet. Add your first one from Manage Workers.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {shownWorkers.map((w) => (
+                      <TableRow key={w.id} className="border-b-0 transition-colors hover:bg-muted/60">
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={cn(
+                                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                                avatarTone(w.name),
+                              )}
+                            >
+                              {initials(w.name)}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium">{w.name}</p>
+                              <p className="truncate text-[11px] text-primary">{w.active ? "Active" : "Inactive"}</p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-sm">{w.phone ?? "—"}</TableCell>
+                        <TableCell>
+                          <AttendanceBadge status={todayStatusByWorker.get(w.id) ?? "unmarked"} />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <p className="whitespace-nowrap text-sm font-semibold">
+                            ₹{Number(w.daily_wage).toLocaleString("en-IN")}
                           </p>
                         </TableCell>
                       </TableRow>
