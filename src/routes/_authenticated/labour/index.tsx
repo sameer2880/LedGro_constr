@@ -23,6 +23,7 @@ import {
   Sun,
   Check,
   X,
+  Eraser,
 } from "lucide-react";
 import { downloadCsv } from "@/lib/export";
 import { toast } from "sonner";
@@ -246,6 +247,16 @@ function MarkAttendanceDialog({
     );
   };
 
+  const clearAllAttendance = () => {
+    const targets = workers.filter((w) => dayMap?.get(w.id));
+    if (targets.length === 0) return toast.info("Nothing to clear for this date");
+    if (!window.confirm(`Clear attendance for ${targets.length} worker(s) on this date?`)) return;
+    clear.mutate(
+      { workerIds: targets.map((w) => w.id) },
+      { onSuccess: () => toast.success("Attendance cleared for this date") },
+    );
+  };
+
   const changeMonth = (delta: number) => {
     const next = new Date(year, month + delta, 1);
     setCursor(next);
@@ -313,11 +324,12 @@ function MarkAttendanceDialog({
                   >
                     {i + 1}
                     {marked && !holiday && (
-                      <span
+                      <Check
                         className={cn(
-                          "absolute bottom-1 h-1.5 w-1.5 rounded-full",
-                          isSel ? "bg-primary-foreground" : "bg-success",
+                          "absolute bottom-0.5 h-2.5 w-2.5",
+                          isSel ? "text-primary-foreground" : "text-success",
                         )}
+                        strokeWidth={3}
                       />
                     )}
                   </button>
@@ -330,7 +342,7 @@ function MarkAttendanceDialog({
                 <span className="h-3 w-3 rounded border border-warning/40 bg-warning/30" /> Holiday (all)
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-success" /> Marked
+                <Check className="h-3 w-3 text-success" strokeWidth={3} /> Marked
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="h-3 w-3 rounded border border-primary bg-primary" /> Selected
@@ -372,6 +384,14 @@ function MarkAttendanceDialog({
                 >
                   <Sun className="h-4 w-4 mr-1.5" />
                   {holidayAll ? "Remove holiday" : "Mark holiday (all)"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={clearAllAttendance}
+                  disabled={busy || workers.length === 0 || counts.unmarked === workers.length}
+                >
+                  <Eraser className="h-4 w-4 mr-1.5" /> Clear attendance
                 </Button>
               </div>
             </div>
