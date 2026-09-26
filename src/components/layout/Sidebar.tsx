@@ -23,7 +23,6 @@ import {
   UserCog,
   Compass,
   MoreHorizontal,
-  X,
   Building2,
   Settings,
 } from "lucide-react";
@@ -463,16 +462,8 @@ function MoreMenuContent({
 
   return (
     <>
-      <div className="flex shrink-0 items-center justify-between border-b border-sidebar-border px-4 py-3">
+      <div className="flex shrink-0 items-center border-b border-sidebar-border px-4 py-3">
         <span className="text-sm font-bold">More</span>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
-        >
-          <X className="h-4 w-4" />
-        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
