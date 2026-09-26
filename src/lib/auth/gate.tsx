@@ -201,6 +201,28 @@ export function Gate({
     "forgot" | "access" | null
   >(null);
 
+  // "Already signed in on another device?" confirmation (replaces window.confirm).
+  const [takeoverOpen, setTakeoverOpen] = useState(false);
+  const takeoverResolveRef = useRef<
+    ((value: boolean) => void) | null
+  >(null);
+
+  const confirmTakeover = useCallback(() => {
+    return new Promise<boolean>((resolve) => {
+      takeoverResolveRef.current = resolve;
+      setTakeoverOpen(true);
+    });
+  }, []);
+
+  const resolveTakeover = useCallback(
+    (result: boolean) => {
+      setTakeoverOpen(false);
+      takeoverResolveRef.current?.(result);
+      takeoverResolveRef.current = null;
+    },
+    [],
+  );
+
   // First-sign-in "choose your own password" step.
   const [newPassword, setNewPassword] = useState("");
   const [newPasswordConfirm, setNewPasswordConfirm] =
@@ -505,10 +527,7 @@ export function Gate({
           me.sessionToken &&
           me.sessionToken !== local
         ) {
-          const takeOver =
-            window.confirm(
-              "This account is already signed in on another device. Log out that device and continue here?",
-            );
+          const takeOver = await confirmTakeover();
 
           if (!takeOver) {
             await supabase.auth.signOut();
@@ -1101,6 +1120,54 @@ export function Gate({
               }
             >
               Got it
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============================================================ */}
+      {/* ALREADY SIGNED IN ON ANOTHER DEVICE                           */}
+      {/* ============================================================ */}
+
+      <Dialog
+        open={takeoverOpen}
+        onOpenChange={(open) =>
+          !open && resolveTakeover(false)
+        }
+      >
+        <DialogContent className="max-w-[400px] rounded-[1.5rem] sm:p-7">
+          <DialogHeader>
+            <DialogTitle>
+              Already signed in elsewhere
+            </DialogTitle>
+
+            <DialogDescription>
+              This account is already signed in on
+              another device. Log out that device
+              and continue here?
+            </DialogDescription>
+          </DialogHeader>
+
+          <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 rounded-full font-semibold"
+              onClick={() =>
+                resolveTakeover(false)
+              }
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="button"
+              className="h-11 rounded-full font-semibold"
+              onClick={() =>
+                resolveTakeover(true)
+              }
+            >
+              Log out & continue
             </Button>
           </DialogFooter>
         </DialogContent>
